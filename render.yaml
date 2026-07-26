@@ -1,0 +1,33 @@
+# Render Blueprint — Community Recycling Reward System
+# Deploy: Dashboard → New → Blueprint → connect this repo
+
+databases:
+  - name: ecorewards-db
+    plan: free
+    databaseName: ecorewards
+    user: ecorewards
+
+services:
+  - type: web
+    name: ecorewards
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build:render
+    preDeployCommand: npx prisma db seed
+    startCommand: npm run start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ecorewards-db
+          property: connectionString
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: AUTH_TRUST_HOST
+        value: "true"
+      - key: NEXTAUTH_URL
+        value: https://ecorewards.onrender.com
