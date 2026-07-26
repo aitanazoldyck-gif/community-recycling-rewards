@@ -57,11 +57,16 @@ async function main() {
   // Admin user
   const adminHash = await bcrypt.hash("Admin123!", 12);
   const admin = await db.user.upsert({
-    where: { email: "admin@ecorewards.local" },
-    update: {},
+    where: { email: "admin@example.com" },
+    update: {
+      passwordHash: adminHash,
+      emailVerified: new Date(),
+      isActive: true,
+      deletedAt: null,
+    },
     create: {
       name: "System Admin",
-      email: "admin@ecorewards.local",
+      email: "admin@example.com",
       passwordHash: adminHash,
       emailVerified: new Date(),
       role: "ADMIN",
@@ -71,11 +76,16 @@ async function main() {
   // Staff user
   const staffHash = await bcrypt.hash("Staff123!", 12);
   const staff = await db.user.upsert({
-    where: { email: "staff@ecorewards.local" },
-    update: {},
+    where: { email: "staff@example.com" },
+    update: {
+      passwordHash: staffHash,
+      emailVerified: new Date(),
+      isActive: true,
+      deletedAt: null,
+    },
     create: {
       name: "Collection Staff",
-      email: "staff@ecorewards.local",
+      email: "staff@example.com",
       passwordHash: staffHash,
       emailVerified: new Date(),
       role: "COLLECTION_STAFF",
@@ -91,11 +101,16 @@ async function main() {
   // Demo resident
   const residentHash = await bcrypt.hash("Resident123!", 12);
   await db.user.upsert({
-    where: { email: "resident@ecorewards.local" },
-    update: {},
+    where: { email: "resident@example.com" },
+    update: {
+      passwordHash: residentHash,
+      emailVerified: new Date(),
+      isActive: true,
+      deletedAt: null,
+    },
     create: {
       name: "Juan Dela Cruz",
-      email: "resident@ecorewards.local",
+      email: "resident@example.com",
       passwordHash: residentHash,
       emailVerified: new Date(),
       role: "RESIDENT",
@@ -185,9 +200,9 @@ async function main() {
   }
 
   console.log("Seed complete!");
-  console.log("  Admin:    admin@ecorewards.local / Admin123!");
-  console.log("  Staff:    staff@ecorewards.local / Staff123!");
-  console.log("  Resident: resident@ecorewards.local / Resident123!");
+  console.log("  Admin:    admin@example.com / Admin123!");
+  console.log("  Staff:    staff@example.com / Staff123!");
+  console.log("  Resident: resident@example.com / Resident123!");
 }
 
 main()

@@ -69,9 +69,9 @@ After seeding, log in with:
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | `admin@ecorewards.local` | `Admin123!` |
-| Collection Staff | `staff@ecorewards.local` | `Staff123!` |
-| Resident | `resident@ecorewards.local` | `Resident123!` |
+| Admin | `admin@example.com` | `Admin123!` |
+| Collection Staff | `staff@example.com` | `Staff123!` |
+| Resident | `resident@example.com` | `Resident123!` |
 
 ## Portals
 
@@ -197,9 +197,9 @@ After the first successful deploy, open your Render URL and log in with seeded d
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | `admin@ecorewards.local` | `Admin123!` |
-| Staff | `staff@ecorewards.local` | `Staff123!` |
-| Resident | `resident@ecorewards.local` | `Resident123!` |
+| Admin | `admin@example.com` | `Admin123!` |
+| Staff | `staff@example.com` | `Staff123!` |
+| Resident | `resident@example.com` | `Resident123!` |
 
 **Google OAuth on Render:** Add authorized redirect URI:
 

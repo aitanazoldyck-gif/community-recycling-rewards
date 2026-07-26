@@ -40,11 +40,15 @@ export async function POST(request: Request) {
     const baseUrl = getAppUrl();
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
-    await sendEmail({
+    const emailResult = await sendEmail({
       to: email,
       subject: `Reset your ${APP_NAME} password`,
       html: resetPasswordEmailHtml(user.name ?? "there", resetLink),
     });
+
+    if (emailResult.skipped) {
+      console.info("[forgot-password] reset link (email not configured):", resetLink);
+    }
 
     return NextResponse.json({
       message: "If an account exists, a reset link has been sent.",

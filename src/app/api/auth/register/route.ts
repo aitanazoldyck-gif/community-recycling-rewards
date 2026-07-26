@@ -61,11 +61,30 @@ export async function POST(request: Request) {
     const baseUrl = getAppUrl();
     const verifyLink = `${baseUrl}/verify-email?token=${token}`;
 
-    await sendEmail({
+    const emailResult = await sendEmail({
       to: normalizedEmail,
       subject: `Verify your ${APP_NAME} account`,
       html: verificationEmailHtml(name, verifyLink),
     });
+
+    if (emailResult.skipped) {
+      await db.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() },
+      });
+      await db.emailVerificationToken.deleteMany({
+        where: { userId: user.id },
+      });
+
+      return NextResponse.json(
+        {
+          message: "Account created. You can sign in now.",
+          userId: user.id,
+          autoVerified: true,
+        },
+        { status: 201 }
+      );
+    }
 
     return NextResponse.json(
       {

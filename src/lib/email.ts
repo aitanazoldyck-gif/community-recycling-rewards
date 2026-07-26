@@ -20,18 +20,15 @@ export async function sendEmail(options: {
   html: string;
 }) {
   const from =
-    process.env.EMAIL_FROM ?? `"${APP_NAME}" <noreply@ecorewards.local>`;
+    process.env.EMAIL_FROM ?? `"${APP_NAME}" <noreply@example.com>`;
 
   if (!transporter) {
-    if (process.env.NODE_ENV === "development") {
-      console.info("[email:dev]", options.subject, "→", options.to);
-      return { ok: true as const, dev: true };
-    }
-    throw new Error("Email transport is not configured");
+    console.info("[email:skipped]", options.subject, "→", options.to);
+    return { ok: true as const, skipped: true };
   }
 
   await transporter.sendMail({ from, ...options });
-  return { ok: true as const, dev: false };
+  return { ok: true as const, skipped: false };
 }
 
 export function verificationEmailHtml(name: string, link: string) {

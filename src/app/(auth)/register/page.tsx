@@ -44,7 +44,11 @@ export default function RegisterPage() {
       return;
     }
 
-    toast.success("Account created! Check your email to verify.");
+    toast.success(
+      json.autoVerified
+        ? "Account created! You can sign in now."
+        : "Account created! Check your email to verify."
+    );
     router.push("/login");
   }
 

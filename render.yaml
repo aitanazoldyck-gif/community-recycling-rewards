@@ -30,4 +30,4 @@ services:
       - key: AUTH_TRUST_HOST
         value: "true"
       - key: NEXTAUTH_URL
-        value: https://ecorewards.onrender.com
+        value: https://community-recycling-rewards.onrender.com
