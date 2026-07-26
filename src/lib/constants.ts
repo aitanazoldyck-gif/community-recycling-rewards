@@ -4,13 +4,6 @@ export const APP_NAME = "EcoRewards";
 export const APP_TAGLINE =
   "Transforming Waste into Rewards through Smart Recycling.";
 
-/** Demo accounts seeded on deploy — use @example.com (valid for HTML/Zod email checks). */
-export const DEMO_ACCOUNTS = [
-  { role: "Admin", email: "admin@example.com", password: "Admin123!" },
-  { role: "Staff", email: "staff@example.com", password: "Staff123!" },
-  { role: "Resident", email: "resident@example.com", password: "Resident123!" },
-] as const;
-
 export const COLORS = {
   primary: "#16A34A",
   secondary: "#10B981",

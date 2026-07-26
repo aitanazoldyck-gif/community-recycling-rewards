@@ -2,7 +2,24 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export async function GET() {
-  return NextResponse.json({ status: "ok", timestamp: new Date().toISOString() });
+  try {
+    await db.$queryRaw`SELECT 1`;
+    return NextResponse.json({
+      status: "ok",
+      database: "connected",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("[health]", error);
+    return NextResponse.json(
+      {
+        status: "error",
+        database: "disconnected",
+        timestamp: new Date().toISOString(),
+      },
+      { status: 503 }
+    );
+  }
 }
 
 export async function HEAD() {

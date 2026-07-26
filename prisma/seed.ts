@@ -199,10 +199,16 @@ async function main() {
     });
   }
 
+  // Unverified accounts cannot sign in when SMTP is configured; on Render there is
+  // no mail server, so mark existing accounts verified after deploy.
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
+    await db.user.updateMany({
+      where: { emailVerified: null },
+      data: { emailVerified: new Date() },
+    });
+  }
+
   console.log("Seed complete!");
-  console.log("  Admin:    admin@example.com / Admin123!");
-  console.log("  Staff:    staff@example.com / Staff123!");
-  console.log("  Resident: resident@example.com / Resident123!");
 }
 
 main()

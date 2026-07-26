@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
@@ -7,6 +7,14 @@ import { db } from "@/lib/db";
 import type { UserRole } from "@/generated/prisma/enums";
 import { loginSchema } from "@/lib/validators/auth";
 import { authConfig } from "@/auth.config";
+
+class EmailNotVerifiedError extends CredentialsSignin {
+  code = "email_not_verified";
+}
+
+function isSmtpConfigured() {
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER);
+}
 
 const googleConfigured =
   Boolean(process.env.GOOGLE_CLIENT_ID) &&
@@ -33,36 +41,49 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const parsed = loginSchema.safeParse(credentials);
+        const email = String(credentials?.email ?? "").trim().toLowerCase();
+        const password = String(credentials?.password ?? "");
+        const parsed = loginSchema.safeParse({ email, password });
         if (!parsed.success) return null;
 
-        const user = await db.user.findFirst({
-          where: {
-            email: parsed.data.email.toLowerCase(),
-            deletedAt: null,
-            isActive: true,
-          },
-        });
+        try {
+          const user = await db.user.findUnique({
+            where: { email: parsed.data.email },
+          });
 
-        if (!user?.passwordHash) return null;
+          if (!user?.passwordHash || user.deletedAt || !user.isActive) {
+            return null;
+          }
 
-        const valid = await bcrypt.compare(
-          parsed.data.password,
-          user.passwordHash
-        );
-        if (!valid) return null;
+          const valid = await bcrypt.compare(
+            parsed.data.password,
+            user.passwordHash
+          );
+          if (!valid) return null;
 
-        if (!user.emailVerified) {
-          throw new Error("EMAIL_NOT_VERIFIED");
+          if (!user.emailVerified) {
+            if (!isSmtpConfigured()) {
+              await db.user.update({
+                where: { id: user.id },
+                data: { emailVerified: new Date() },
+              });
+            } else {
+              throw new EmailNotVerifiedError();
+            }
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            role: user.role,
+          };
+        } catch (error) {
+          if (error instanceof EmailNotVerifiedError) throw error;
+          console.error("[auth:credentials]", error);
+          return null;
         }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          role: user.role,
-        };
       },
     }),
   ],

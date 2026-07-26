@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
-import { DEMO_ACCOUNTS } from "@/lib/constants";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,7 +23,6 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -38,7 +36,7 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      if (result.error === "EMAIL_NOT_VERIFIED") {
+      if (result.code === "email_not_verified") {
         toast.error("Please verify your email before signing in.");
       } else {
         toast.error("Invalid email or password.");
@@ -56,24 +54,11 @@ export default function LoginPage() {
     await signIn("google", { callbackUrl });
   }
 
-  function fillDemoAccount(email: string, password: string) {
-    setValue("email", email, { shouldValidate: true });
-    setValue("password", password, { shouldValidate: true });
-  }
-
   return (
     <AuthLayout
       title="Welcome back"
       subtitle="Sign in to your EcoRewards account"
     >
-      <Link href="/register" className="block">
-        <Button type="button" variant="outline" className="w-full">
-          Create new account
-        </Button>
-      </Link>
-
-      <AuthDivider text="or sign in" />
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -120,26 +105,6 @@ export default function LoginPage() {
           )}
         </Button>
       </form>
-
-      <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-3">
-        <p className="text-sm font-medium">Demo accounts</p>
-        <div className="space-y-2">
-          {DEMO_ACCOUNTS.map((account) => (
-            <button
-              key={account.email}
-              type="button"
-              onClick={() => fillDemoAccount(account.email, account.password)}
-              className="flex w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-left text-sm transition-colors hover:bg-muted"
-            >
-              <span className="font-medium">{account.role}</span>
-              <span className="text-muted-foreground">{account.email}</span>
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Click a role to fill credentials, then press Sign in.
-        </p>
-      </div>
 
       <AuthDivider />
       <GoogleButton onClick={handleGoogle} loading={googleLoading} />

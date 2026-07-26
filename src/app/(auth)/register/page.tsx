@@ -46,9 +46,24 @@ export default function RegisterPage() {
 
     toast.success(
       json.autoVerified
-        ? "Account created! You can sign in now."
+        ? "Account created! Signing you in..."
         : "Account created! Check your email to verify."
     );
+
+    if (json.autoVerified) {
+      const signInResult = await signIn("credentials", {
+        email: data.email.trim().toLowerCase(),
+        password: data.password,
+        redirect: false,
+      });
+
+      if (!signInResult?.error) {
+        router.push("/resident");
+        router.refresh();
+        return;
+      }
+    }
+
     router.push("/login");
   }
 

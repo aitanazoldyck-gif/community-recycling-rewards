@@ -1,6 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { PrismaClient } from "@/generated/prisma/client";
+import { resolvePgConnectionString } from "@/lib/database-url";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -8,14 +9,17 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = resolvePgConnectionString();
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is not configured");
+  }
+
   const pool =
     globalForPrisma.pgPool ??
     new Pool({
       connectionString,
       ssl:
         process.env.NODE_ENV === "production" &&
-        connectionString &&
         !connectionString.includes(".render.internal")
           ? { rejectUnauthorized: false }
           : undefined,
