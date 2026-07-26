@@ -1,3 +1,4 @@
+import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { db } from "../src/lib/db";
 import { DEFAULT_WASTE_CATEGORIES } from "../src/lib/constants";

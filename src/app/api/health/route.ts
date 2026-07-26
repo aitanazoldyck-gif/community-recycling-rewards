@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { ensureDemoUsers } from "@/lib/bootstrap-users";
 
 export async function GET() {
   try {
     await db.$queryRaw`SELECT 1`;
+    await ensureDemoUsers();
+
+    const userCount = await db.user.count();
+
     return NextResponse.json({
       status: "ok",
       database: "connected",
+      users: userCount,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

@@ -10,6 +10,10 @@ import {
 import { APP_NAME } from "@/lib/constants";
 import { getAppUrl } from "@/lib/env";
 
+function isSmtpConfigured() {
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER);
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -24,6 +28,7 @@ export async function POST(request: Request) {
 
     const { name, email, password, phone } = parsed.data;
     const normalizedEmail = email.toLowerCase();
+    const smtpConfigured = isSmtpConfigured();
 
     const existing = await db.user.findUnique({
       where: { email: normalizedEmail },
@@ -47,9 +52,14 @@ export async function POST(request: Request) {
         phone,
         passwordHash,
         role: "RESIDENT",
-        emailVerificationTokens: {
-          create: { token, expires },
-        },
+        emailVerified: smtpConfigured ? null : new Date(),
+        ...(smtpConfigured
+          ? {
+              emailVerificationTokens: {
+                create: { token, expires },
+              },
+            }
+          : {}),
         residentProfile: {
           create: {
             wallet: { create: {} },
@@ -58,16 +68,28 @@ export async function POST(request: Request) {
       },
     });
 
+    if (!smtpConfigured) {
+      return NextResponse.json(
+        {
+          message: "Account created. You can sign in now.",
+          userId: user.id,
+          autoVerified: true,
+        },
+        { status: 201 }
+      );
+    }
+
     const baseUrl = getAppUrl();
     const verifyLink = `${baseUrl}/verify-email?token=${token}`;
 
-    const emailResult = await sendEmail({
-      to: normalizedEmail,
-      subject: `Verify your ${APP_NAME} account`,
-      html: verificationEmailHtml(name, verifyLink),
-    });
-
-    if (emailResult.skipped) {
+    try {
+      await sendEmail({
+        to: normalizedEmail,
+        subject: `Verify your ${APP_NAME} account`,
+        html: verificationEmailHtml(name, verifyLink),
+      });
+    } catch (emailError) {
+      console.error("[register:email]", emailError);
       await db.user.update({
         where: { id: user.id },
         data: { emailVerified: new Date() },
@@ -88,7 +110,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        message: "Account created. Please check your email to verify your account.",
+        message:
+          "Account created. Please check your email to verify your account.",
         userId: user.id,
       },
       { status: 201 }

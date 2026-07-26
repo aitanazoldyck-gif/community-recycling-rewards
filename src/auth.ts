@@ -100,11 +100,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       if (token.id && !token.role) {
-        const dbUser = await db.user.findUnique({
-          where: { id: token.id as string },
-          select: { role: true },
-        });
-        token.role = dbUser?.role ?? "RESIDENT";
+        try {
+          const dbUser = await db.user.findUnique({
+            where: { id: token.id as string },
+            select: { role: true },
+          });
+          token.role = dbUser?.role ?? "RESIDENT";
+        } catch (error) {
+          console.error("[auth:jwt]", error);
+          token.role = "RESIDENT";
+        }
       }
 
       return token;
