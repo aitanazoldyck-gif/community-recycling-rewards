@@ -123,8 +123,13 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("[register]", error);
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Registration failed. Please try again.";
+
     return NextResponse.json(
-      { error: "Registration failed. Please try again." },
+      { error: message },
       { status: 500 }
     );
   }

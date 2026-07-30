@@ -34,25 +34,37 @@ export default function RegisterPage() {
       body: JSON.stringify(data),
     });
 
-    const json = await res.json();
+    let json: any;
+    try {
+      json = await res.json();
+    } catch (fetchError) {
+      toast.error("Registration failed. Server returned an invalid response.");
+      return;
+    }
 
     if (!res.ok) {
+      let toastMessage = "Registration failed. Please check your details.";
+
       if (json?.error && typeof json.error === "object") {
-        Object.entries(json.error).forEach(([field, messages]) => {
+        for (const [field, messages] of Object.entries(json.error)) {
           if (Array.isArray(messages) && messages.length > 0) {
             setError(field as keyof RegisterInput, {
               type: "server",
               message: String(messages[0]),
             });
+            toastMessage = String(messages[0]);
+            break;
           }
-        });
+        }
       }
 
-      toast.error(
-        typeof json.error === "string"
-          ? json.error
-          : "Registration failed. Please check your details."
-      );
+      if (typeof json.error === "string") {
+        toastMessage = json.error;
+      } else if (Array.isArray(json?.error)) {
+        toastMessage = json.error.join(" ");
+      }
+
+      toast.error(toastMessage);
       return;
     }
 
