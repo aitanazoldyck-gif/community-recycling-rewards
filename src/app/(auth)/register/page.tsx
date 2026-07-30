@@ -22,6 +22,7 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    setError,
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
   });
@@ -36,6 +37,17 @@ export default function RegisterPage() {
     const json = await res.json();
 
     if (!res.ok) {
+      if (json?.error && typeof json.error === "object") {
+        Object.entries(json.error).forEach(([field, messages]) => {
+          if (Array.isArray(messages) && messages.length > 0) {
+            setError(field as keyof RegisterInput, {
+              type: "server",
+              message: String(messages[0]),
+            });
+          }
+        });
+      }
+
       toast.error(
         typeof json.error === "string"
           ? json.error
