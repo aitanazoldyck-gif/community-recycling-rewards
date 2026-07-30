@@ -28,6 +28,7 @@ export async function POST(request: Request) {
 
     const { name, email, password, phone } = parsed.data;
     const normalizedEmail = email.toLowerCase();
+    const normalizedPhone = phone?.trim() || undefined;
     const smtpConfigured = isSmtpConfigured();
 
     const existing = await db.user.findUnique({
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
       data: {
         name,
         email: normalizedEmail,
-        phone,
+        phone: normalizedPhone,
         passwordHash,
         role: "RESIDENT",
         emailVerified: smtpConfigured ? null : new Date(),

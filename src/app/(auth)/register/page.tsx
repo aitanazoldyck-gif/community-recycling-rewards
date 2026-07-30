@@ -109,6 +109,10 @@ export default function RegisterPage() {
             placeholder="••••••••"
             {...register("password")}
           />
+          <p className="text-sm text-muted-foreground">
+            Use at least 8 characters and include one uppercase letter and one
+            number.
+          </p>
           {errors.password && (
             <p className="text-sm text-danger">{errors.password.message}</p>
           )}
