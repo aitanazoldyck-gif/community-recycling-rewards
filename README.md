@@ -9,7 +9,7 @@ A full-stack web application for community recycling programs. Residents earn po
 - **Frontend:** Next.js 16, React 19, Tailwind CSS 4
 - **Backend:** Next.js API Routes, NextAuth v5
 - **Database:** PostgreSQL + Prisma 7
-- **AI:** OpenAI (optional — chat assistant & waste classification)
+- **AI:** Google Gemini (optional — chat assistant & waste classification)
 
 ## Prerequisites
 
@@ -43,8 +43,8 @@ Optional (features work with fallbacks without these):
 
 | Variable | Feature |
 |---|---|
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google sign-in |
-| `OPENAI_API_KEY` | AI assistant & image classification |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google / Gmail sign-in |
+| `GEMINI_API_KEY` | AI assistant & image classification |
 | `SMTP_*` | Email (password reset, verification) |
 | `CLOUDINARY_*` | Image uploads |
 
@@ -186,8 +186,8 @@ Optional:
 
 | Variable | Feature |
 |---|---|
-| `OPENAI_API_KEY` | AI assistant & waste classifier |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google sign-in |
+| `GEMINI_API_KEY` | AI assistant & waste classifier |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google / Gmail sign-in |
 | `SMTP_*` | Email verification & password reset |
 | `CLOUDINARY_*` | Image uploads |
 
@@ -204,6 +204,22 @@ After the first successful deploy, open your Render URL and log in with seeded d
 **Google OAuth on Render:** Add authorized redirect URI:
 
 `https://YOUR-SERVICE-NAME.onrender.com/api/auth/callback/google`
+
+**Gemini models (optional overrides):**
+
+| Variable | Default | Use |
+|---|---|---|
+| `GEMINI_CHAT_MODEL` | `gemini-2.5-flash-lite` | AI recycling assistant |
+| `GEMINI_VISION_MODEL` | `gemini-2.5-flash` | Waste image classification |
+
+Get a Gemini API key at [Google AI Studio](https://aistudio.google.com/apikey).
+
+**Google / Gmail sign-in setup:**
+
+1. Firebase Console → Authentication → enable **Google** (same Google Cloud project)
+2. Google Cloud Console → **APIs & Services** → **Credentials** → **OAuth client ID** (Web)
+3. Authorized redirect URI: `https://YOUR-SERVICE.onrender.com/api/auth/callback/google`
+4. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in Render Environment
 
 ## License
 

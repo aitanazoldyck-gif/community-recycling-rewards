@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { motion } from "framer-motion";
 import {
   Recycle,
   LayoutDashboard,
@@ -157,20 +158,25 @@ export function DashboardShell({
             const isActive = isRoot ? pathname === item.href : active;
 
             return (
-              <Link
+              <motion.div
                 key={item.href}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
-                  isActive
-                    ? "bg-primary/10 text-primary shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
+                whileHover={{ x: 2 }}
+                transition={{ type: "spring", stiffness: 400, damping: 28 }}
               >
-                <item.icon className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-              </Link>
+                <Link
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
+                    isActive
+                      ? "bg-primary/10 text-primary shadow-sm"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span>{item.label}</span>}
+                </Link>
+              </motion.div>
             );
           })}
         </nav>
@@ -213,7 +219,15 @@ export function DashboardShell({
           </button>
           <div className="flex-1" />
         </header>
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">{children}</main>
+        <motion.main
+          key={pathname}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+          className="flex-1 p-4 lg:p-6 overflow-auto"
+        >
+          {children}
+        </motion.main>
       </div>
     </div>
   );

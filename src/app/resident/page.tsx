@@ -15,6 +15,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import {
+  DashboardPageHeader,
+  FadeInSection,
+  HoverLiftCard,
+  StaggerGrid,
+  StaggerItem,
+} from "@/components/dashboard/dashboard-motion";
 
 export default async function ResidentDashboardPage() {
   const session = await auth();
@@ -84,38 +91,35 @@ export default async function ResidentDashboardPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Welcome back, {session.user.name?.split(" ")[0] ?? "Resident"}
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          {profile?.barangay?.name
-            ? `${profile.barangay.name} · `
-            : ""}
-          Track your recycling impact and rewards
-        </p>
-      </div>
+      <DashboardPageHeader
+        title={`Welcome back, ${session.user.name?.split(" ")[0] ?? "Resident"}`}
+        subtitle={`${profile?.barangay?.name ? `${profile.barangay.name} · ` : ""}Track your recycling impact and rewards`}
+      />
 
-      <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <StaggerGrid className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className="hover:shadow-lg transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{stat.sub}</p>
-                </div>
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <StaggerItem key={stat.label}>
+            <HoverLiftCard>
+              <Card className="hover:shadow-lg transition-shadow h-full">
+                <CardContent className="pt-6">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                      <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{stat.sub}</p>
+                    </div>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg}`}>
+                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </HoverLiftCard>
+          </StaggerItem>
         ))}
-      </div>
+      </StaggerGrid>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <FadeInSection className="grid lg:grid-cols-3 gap-6" delay={0.16}>
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Recent recycling</CardTitle>
@@ -196,9 +200,10 @@ export default async function ResidentDashboardPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </FadeInSection>
 
       {announcements.length > 0 && (
+        <FadeInSection delay={0.22}>
         <Card>
           <CardHeader>
             <CardTitle>Announcements</CardTitle>
@@ -220,6 +225,7 @@ export default async function ResidentDashboardPage() {
             ))}
           </CardContent>
         </Card>
+        </FadeInSection>
       )}
     </div>
   );

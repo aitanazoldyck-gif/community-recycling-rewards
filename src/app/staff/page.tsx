@@ -5,6 +5,13 @@ import { ScanLine, ClipboardList, Truck, Recycle } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  DashboardPageHeader,
+  FadeInSection,
+  HoverLiftCard,
+  StaggerGrid,
+  StaggerItem,
+} from "@/components/dashboard/dashboard-motion";
 
 export default async function StaffDashboardPage() {
   const session = await auth();
@@ -31,53 +38,67 @@ export default async function StaffDashboardPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold">Staff Dashboard</h1>
-        <p className="text-muted-foreground">Collection operations center</p>
-      </div>
+      <DashboardPageHeader
+        title="Staff Dashboard"
+        subtitle="Collection operations center"
+      />
 
-      <div className="grid sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Today&apos;s records</p>
-            <p className="text-3xl font-bold mt-1">{todayRecords}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Pending pickups</p>
-            <p className="text-3xl font-bold mt-1">{pendingPickups}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6 flex items-center gap-3">
-            <Recycle className="h-8 w-8 text-primary" />
-            <div>
-              <p className="font-medium">Ready to collect</p>
-              <p className="text-sm text-muted-foreground">Scan or record below</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid sm:grid-cols-3 gap-4">
-        {actions.map((a) => (
-          <Link key={a.href} href={a.href}>
-            <Card className="h-full hover:shadow-lg transition-all hover:-translate-y-0.5 cursor-pointer">
-              <CardHeader>
-                <a.icon className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">{a.label}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{a.desc}</p>
-                <Button variant="outline" size="sm" className="mt-4">
-                  Open
-                </Button>
+      <StaggerGrid className="grid sm:grid-cols-3 gap-4">
+        <StaggerItem>
+          <HoverLiftCard>
+            <Card className="h-full">
+              <CardContent className="pt-6">
+                <p className="text-sm text-muted-foreground">Today&apos;s records</p>
+                <p className="text-3xl font-bold mt-1">{todayRecords}</p>
               </CardContent>
             </Card>
+          </HoverLiftCard>
+        </StaggerItem>
+        <StaggerItem>
+          <HoverLiftCard>
+            <Card className="h-full">
+              <CardContent className="pt-6">
+                <p className="text-sm text-muted-foreground">Pending pickups</p>
+                <p className="text-3xl font-bold mt-1">{pendingPickups}</p>
+              </CardContent>
+            </Card>
+          </HoverLiftCard>
+        </StaggerItem>
+        <StaggerItem>
+          <HoverLiftCard>
+            <Card className="h-full">
+              <CardContent className="pt-6 flex items-center gap-3">
+                <Recycle className="h-8 w-8 text-primary" />
+                <div>
+                  <p className="font-medium">Ready to collect</p>
+                  <p className="text-sm text-muted-foreground">Scan or record below</p>
+                </div>
+              </CardContent>
+            </Card>
+          </HoverLiftCard>
+        </StaggerItem>
+      </StaggerGrid>
+
+      <FadeInSection className="grid sm:grid-cols-3 gap-4" delay={0.14}>
+        {actions.map((a) => (
+          <Link key={a.href} href={a.href}>
+            <HoverLiftCard>
+              <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader>
+                  <a.icon className="h-8 w-8 text-primary mb-2" />
+                  <CardTitle className="text-lg">{a.label}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{a.desc}</p>
+                  <Button variant="outline" size="sm" className="mt-4">
+                    Open
+                  </Button>
+                </CardContent>
+              </Card>
+            </HoverLiftCard>
           </Link>
         ))}
-      </div>
+      </FadeInSection>
     </div>
   );
 }

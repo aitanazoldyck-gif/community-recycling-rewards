@@ -43,7 +43,7 @@ export default async function AdminSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           {[
-            { label: "OpenAI", configured: !!process.env.OPENAI_API_KEY },
+            { label: "Gemini AI", configured: !!(process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY) },
             { label: "Google OAuth", configured: !!process.env.GOOGLE_CLIENT_ID },
             { label: "SMTP Email", configured: !!process.env.SMTP_HOST },
             { label: "Cloudinary", configured: !!process.env.CLOUDINARY_CLOUD_NAME },

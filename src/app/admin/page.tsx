@@ -4,6 +4,13 @@ import { redirect } from "next/navigation";
 import { formatPoints, formatWeight } from "@/lib/utils";
 import { Users, Recycle, Wallet, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DashboardPageHeader,
+  FadeInSection,
+  HoverLiftCard,
+  StaggerGrid,
+  StaggerItem,
+} from "@/components/dashboard/dashboard-motion";
 
 export default async function AdminDashboardPage() {
   const session = await auth();
@@ -28,33 +35,39 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Platform overview and analytics</p>
-      </div>
+      <DashboardPageHeader
+        title="Admin Dashboard"
+        subtitle="Platform overview and analytics"
+      />
 
-      <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      <StaggerGrid className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {stats.map((s) => (
-          <Card key={s.label}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{s.label}</p>
-                  <p className="text-2xl font-bold mt-1">{s.value}</p>
-                </div>
-                <s.icon className="h-8 w-8 text-primary/60" />
-              </div>
-            </CardContent>
-          </Card>
+          <StaggerItem key={s.label}>
+            <HoverLiftCard>
+              <Card className="h-full">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{s.label}</p>
+                      <p className="text-2xl font-bold mt-1">{s.value}</p>
+                    </div>
+                    <s.icon className="h-8 w-8 text-primary/60" />
+                  </div>
+                </CardContent>
+              </Card>
+            </HoverLiftCard>
+          </StaggerItem>
         ))}
-      </div>
+      </StaggerGrid>
 
       {redemptions > 0 && (
+        <FadeInSection delay={0.18}>
         <Card className="border-warning/30 bg-warning/5">
           <CardContent className="pt-6">
             <p className="font-medium">{redemptions} pending redemption requests need review</p>
           </CardContent>
         </Card>
+        </FadeInSection>
       )}
     </div>
   );

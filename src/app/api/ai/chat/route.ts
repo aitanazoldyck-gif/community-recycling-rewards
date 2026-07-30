@@ -1,10 +1,12 @@
-import OpenAI from "openai";
 import { auth } from "@/auth";
 import { APP_NAME } from "@/lib/constants";
-
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  : null;
+import {
+  GEMINI_CHAT_MODEL,
+  getGeminiClient,
+  isGeminiConfigured,
+  toGeminiContents,
+  type ChatMessage,
+} from "@/lib/gemini";
 
 const SYSTEM_PROMPT = `You are the AI recycling assistant for ${APP_NAME}, a community recycling reward platform in the Philippines.
 
@@ -19,7 +21,7 @@ Help residents with:
 Be friendly, concise, and practical. Use metric units (kg). If unsure, suggest visiting a collection center or contacting barangay staff.`;
 
 export async function POST(request: Request) {
-  const session = await auth();
+  await auth();
 
   try {
     const { messages } = await request.json();
@@ -28,29 +30,44 @@ export async function POST(request: Request) {
       return new Response("Invalid messages", { status: 400 });
     }
 
-    if (!openai) {
-      const fallback = getFallbackResponse(messages[messages.length - 1]?.content ?? "");
+    const chatMessages = messages as ChatMessage[];
+
+    if (!isGeminiConfigured()) {
+      const fallback = getFallbackResponse(
+        chatMessages[chatMessages.length - 1]?.content ?? ""
+      );
       return new Response(fallback, {
         headers: { "Content-Type": "text/plain; charset=utf-8" },
       });
     }
 
-    const stream = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
-      stream: true,
-      max_tokens: 800,
-      temperature: 0.7,
+    const genAI = getGeminiClient()!;
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_CHAT_MODEL,
+      systemInstruction: SYSTEM_PROMPT,
+      generationConfig: {
+        maxOutputTokens: 800,
+        temperature: 0.7,
+      },
+    });
+
+    const result = await model.generateContentStream({
+      contents: toGeminiContents(chatMessages),
     });
 
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
       async start(controller) {
-        for await (const chunk of stream) {
-          const text = chunk.choices[0]?.delta?.content ?? "";
-          if (text) controller.enqueue(encoder.encode(text));
+        try {
+          for await (const chunk of result.stream) {
+            const text = chunk.text();
+            if (text) controller.enqueue(encoder.encode(text));
+          }
+          controller.close();
+        } catch (streamError) {
+          console.error("[ai/chat:stream]", streamError);
+          controller.error(streamError);
         }
-        controller.close();
       },
     });
 
@@ -82,5 +99,5 @@ function getFallbackResponse(question: string): string {
     return "Visit the 'Nearby Centers' section in your dashboard to see collection centers on the map with hours and contact info. You can also request a pickup from home.";
   }
 
-  return `Thanks for your question! For ${APP_NAME}, always sort waste before collection, bring your QR card, and visit a collection center during scheduled hours. Configure OPENAI_API_KEY for full AI responses. Common tips: rinse containers, separate hazardous waste, and check your barangay schedule.`;
+  return `Thanks for your question! For ${APP_NAME}, always sort waste before collection, bring your QR card, and visit a collection center during scheduled hours. Configure GEMINI_API_KEY for full AI responses. Common tips: rinse containers, separate hazardous waste, and check your barangay schedule.`;
 }
