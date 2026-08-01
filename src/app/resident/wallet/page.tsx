@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RewardsCatalog } from "@/components/resident/rewards-catalog";
 
+export const dynamic = "force-dynamic";
+
 export default async function WalletPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
