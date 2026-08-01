@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Html5Qrcode, Html5QrcodeScanner } from "html5-qrcode";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,77 +25,24 @@ type ResidentInfo = {
   environmentalScore: number;
 };
 
-declare global {
-  interface Window {
-    BarcodeDetector?: {
-      new (): {
-        detect(source: ImageBitmap | HTMLCanvasElement | HTMLVideoElement | ImageData): Promise<Array<{ rawValue: string }>>;
-      };
-    };
-  }
-}
-
 export default function ScanPage() {
   const [qr, setQr] = useState("");
   const [loading, setLoading] = useState(false);
   const [resident, setResident] = useState<ResidentInfo | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
-  const [scanSupported, setScanSupported] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const supported = typeof window !== "undefined" && "BarcodeDetector" in window && Boolean(navigator.mediaDevices?.getUserMedia);
-    setScanSupported(supported);
-
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
       }
+      void scannerRef.current?.clear().catch(() => undefined);
+      scannerRef.current = null;
     };
-  }, []);
-
-  useEffect(() => {
-    if (!cameraActive) return;
-
-    let intervalId: number | undefined;
-
-    const runDetection = async () => {
-      if (!videoRef.current || !streamRef.current || loading) return;
-
-      try {
-        const detector = getBarcodeDetector();
-        if (!detector) return;
-
-        const canvas = document.createElement("canvas");
-        canvas.width = videoRef.current.videoWidth || 640;
-        canvas.height = videoRef.current.videoHeight || 480;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const [result] = await detector.detect(canvas);
-        const value = result?.rawValue?.trim();
-        if (value) {
-          setQr(value);
-          await lookupResident(value);
-        }
-      } catch {
-        // Ignore transient detection errors and keep scanning.
-      }
-    };
-
-    intervalId = window.setInterval(() => {
-      void runDetection();
-    }, 1200);
-
-    return () => {
-      if (intervalId) window.clearInterval(intervalId);
-    };
-  }, [cameraActive, loading]);
+  }, [previewUrl]);
 
   async function lookupResident(valueOverride?: string) {
     const value = (valueOverride ?? qr).trim();
@@ -119,42 +67,55 @@ export default function ScanPage() {
     await lookupResident(qr);
   }
 
-  function getBarcodeDetector() {
-    if (typeof window === "undefined" || !("BarcodeDetector" in window)) return null;
-    return new window.BarcodeDetector();
-  }
-
   async function startCamera() {
-    if (!scanSupported) {
-      toast.error("Camera scanning is not supported in this browser. Please upload an image instead.");
+    if (scannerRef.current) {
       return;
     }
 
     try {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-      }
+      const scanner = new Html5QrcodeScanner(
+        "reader",
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+        },
+        false,
+      );
 
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
+      await scanner.render(
+        async (decodedText) => {
+          setQr(decodedText);
+          await lookupResident(decodedText);
+          setCameraActive(false);
+          try {
+            await scanner.clear();
+          } catch {
+            // Ignore cleanup errors.
+          }
+          scannerRef.current = null;
+        },
+        () => {
+          // Ignore transient scanner errors while waiting for a valid QR.
+        },
+      );
+
+      scannerRef.current = scanner;
       setCameraActive(true);
       toast.success("Camera ready. Point it at the QR code.");
     } catch {
-      toast.error("Unable to access your camera. You can still upload a QR image file.");
+      toast.error("Unable to start the camera scanner. Please try again or upload an image instead.");
     }
   }
 
-  function stopCamera() {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
+  async function stopCamera() {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.clear();
+      } catch {
+        // Ignore cleanup errors.
+      }
+      scannerRef.current = null;
     }
     setCameraActive(false);
   }
@@ -168,34 +129,30 @@ export default function ScanPage() {
       return;
     }
 
-    stopCamera();
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      setPreviewUrl(reader.result as string);
+    await stopCamera();
+
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+
+    const html5QrCode = new Html5Qrcode("reader");
+    try {
+      const decodedText = await html5QrCode.scanFile(file, true);
+      setQr(decodedText);
+      await lookupResident(decodedText);
+    } catch {
+      toast.error("We could not read a QR code from that image. Please try another file.");
+    } finally {
       try {
-        const detector = getBarcodeDetector();
-        if (!detector) {
-          toast.error("QR detection is not supported in this browser. Please enter the code manually.");
-          return;
-        }
-
-        const imageBitmap = await createImageBitmap(file);
-        const [result] = await detector.detect(imageBitmap);
-        const value = result?.rawValue?.trim();
-        if (value) {
-          setQr(value);
-          await lookupResident(value);
-        } else {
-          toast.error("No QR code was detected in the image. Please try another photo.");
-        }
+        await html5QrCode.clear();
       } catch {
-        toast.error("We could not read the QR code from that image. Please try another file.");
+        // Ignore cleanup errors.
       }
-    };
-
-    reader.readAsDataURL(file);
-    event.target.value = "";
+      event.target.value = "";
+    }
   }
 
   return (
@@ -214,7 +171,7 @@ export default function ScanPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={startCamera} disabled={loading || cameraActive} className="gap-2">
+            <Button type="button" onClick={() => void startCamera()} disabled={loading || cameraActive} className="gap-2">
               <Camera className="h-4 w-4" />
               {cameraActive ? "Camera active" : "Open camera"}
             </Button>
@@ -223,21 +180,15 @@ export default function ScanPage() {
               Upload image
             </Button>
             {cameraActive && (
-              <Button type="button" variant="outline" onClick={stopCamera} className="gap-2">
+              <Button type="button" variant="outline" onClick={() => void stopCamera()} className="gap-2">
                 Stop camera
               </Button>
             )}
           </div>
 
-          {!scanSupported && (
-            <p className="text-sm text-muted-foreground">
-              Camera scanning is not available in this browser. You can still upload a QR image file.
-            </p>
-          )}
-
           {cameraActive && (
             <div className="rounded-lg border bg-muted/40 p-2">
-              <video ref={videoRef} className="w-full rounded-md bg-black" playsInline muted />
+              <div id="reader" className="min-h-[280px] w-full rounded-md bg-black/90" />
             </div>
           )}
 
@@ -247,9 +198,9 @@ export default function ScanPage() {
             </div>
           )}
 
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(event) => void handleFileUpload(event)} />
 
-          <form onSubmit={lookup} className="space-y-4">
+          <form onSubmit={(event) => void lookup(event)} className="space-y-4">
             <div>
               <Label htmlFor="qr">Resident QR code</Label>
               <Input
