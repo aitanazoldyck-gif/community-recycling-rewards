@@ -30,6 +30,9 @@ let bootstrapPromise: Promise<void> | null = null;
  */
 export async function ensureDemoUsers() {
   if (bootstrapPromise) return bootstrapPromise;
+  if (!process.env.DATABASE_URL && !process.env.DIRECT_URL) {
+    return;
+  }
 
   bootstrapPromise = (async () => {
     const center = await db.collectionCenter.findFirst({
