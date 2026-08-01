@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatPoints, formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +21,7 @@ export function RewardsCatalog({
   balance: number;
   redemptions: RedemptionWithReward[];
 }) {
+  const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [currentBalance, setCurrentBalance] = useState(balance);
   const [currentRedemptions, setCurrentRedemptions] = useState(redemptions);
@@ -55,6 +57,7 @@ export function RewardsCatalog({
         ]);
       }
       toast.success("Redemption submitted for approval!");
+      router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
