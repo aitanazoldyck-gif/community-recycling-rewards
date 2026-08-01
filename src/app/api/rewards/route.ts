@@ -3,6 +3,13 @@ import { requireRole, requireSession } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 
+async function ensureWallet(userId: string) {
+  const existing = await db.rewardWallet.findUnique({ where: { residentId: userId } });
+  if (existing) return existing;
+
+  return db.rewardWallet.create({ data: { residentId: userId, balance: 0, lifetime: 0 } });
+}
+
 export async function GET() {
   const authResult = await requireSession();
   if ("error" in authResult) return authResult.error;
@@ -29,7 +36,7 @@ export async function POST(request: Request) {
 
     const [reward, wallet] = await Promise.all([
       db.reward.findFirst({ where: { id: rewardId, isActive: true, deletedAt: null } }),
-      db.rewardWallet.findUnique({ where: { residentId: userId } }),
+      ensureWallet(userId),
     ]);
 
     if (!reward || reward.stock <= 0) {
@@ -56,24 +63,22 @@ export async function POST(request: Request) {
         data: { stock: { decrement: 1 } },
       });
 
-      if (wallet) {
-        const newBalance = balance - reward.pointsCost;
-        await tx.rewardWallet.update({
-          where: { id: wallet.id },
-          data: { balance: newBalance },
-        });
-        await tx.rewardTransaction.create({
-          data: {
-            walletId: wallet.id,
-            userId,
-            type: "REDEEM",
-            amount: -reward.pointsCost,
-            balanceAfter: newBalance,
-            description: `Redeemed: ${reward.name}`,
-            referenceId: req.id,
-          },
-        });
-      }
+      const newBalance = balance - reward.pointsCost;
+      await tx.rewardWallet.update({
+        where: { id: wallet.id },
+        data: { balance: newBalance },
+      });
+      await tx.rewardTransaction.create({
+        data: {
+          walletId: wallet.id,
+          userId,
+          type: "REDEEM",
+          amount: -reward.pointsCost,
+          balanceAfter: newBalance,
+          description: `Redeemed: ${reward.name}`,
+          referenceId: req.id,
+        },
+      });
 
       await tx.notification.create({
         data: {
@@ -93,7 +98,7 @@ export async function POST(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.flatten() }, { status: 400 });
     }
-    return NextResponse.json({ error: "Redemption failed" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Redemption failed" }, { status: 500 });
   }
 }
 
