@@ -41,6 +41,19 @@ export const WASTE_TYPE_LABELS: Record<WasteType, string> = {
   OTHER: "Other",
 };
 
+const CUSTOM_WASTE_CATEGORIES = [
+  { type: "ORGANIC" as const, name: "Biodegradable Waste (Organic)", pointsPerKg: 5, carbonFactorKg: 0.5 },
+  { type: "PLASTIC" as const, name: "Recyclable Waste (Plastic)", pointsPerKg: 10, carbonFactorKg: 2.5 },
+  { type: "PAPER" as const, name: "Recyclable Waste (Paper)", pointsPerKg: 8, carbonFactorKg: 1.8 },
+  { type: "GLASS" as const, name: "Recyclable Waste (Glass)", pointsPerKg: 12, carbonFactorKg: 0.8 },
+  { type: "METAL" as const, name: "Recyclable Waste (Metal)", pointsPerKg: 15, carbonFactorKg: 4.0 },
+  { type: "OTHER" as const, name: "Residual Waste (Non-Recyclable)", pointsPerKg: 3, carbonFactorKg: 0.3 },
+  { type: "HAZARDOUS" as const, name: "Hazardous Waste", pointsPerKg: 20, carbonFactorKg: 3.0 },
+  { type: "ELECTRONICS" as const, name: "Electronic Waste (E-Waste)", pointsPerKg: 25, carbonFactorKg: 6.0 },
+  { type: "TEXTILE" as const, name: "Medical Waste", pointsPerKg: 7, carbonFactorKg: 1.2 },
+  { type: "OTHER" as const, name: "Construction Waste", pointsPerKg: 4, carbonFactorKg: 1.0 },
+];
+
 export const DEFAULT_WASTE_CATEGORIES: {
   type: WasteType;
   name: string;
@@ -66,4 +79,5 @@ export const DEFAULT_WASTE_CATEGORIES: {
     carbonFactorKg: 3.0,
   },
   { type: "OTHER", name: "Other", pointsPerKg: 3, carbonFactorKg: 0.3 },
+  ...CUSTOM_WASTE_CATEGORIES,
 ];
