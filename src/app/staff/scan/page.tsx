@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Html5Qrcode, Html5QrcodeScanner } from "html5-qrcode";
+import { Html5Qrcode } from "html5-qrcode";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ export default function ScanPage() {
   const [resident, setResident] = useState<ResidentInfo | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -39,8 +39,7 @@ export default function ScanPage() {
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
-      void scannerRef.current?.clear().catch(() => undefined);
-      scannerRef.current = null;
+      void stopCamera();
     };
   }, [previewUrl]);
 
@@ -67,49 +66,13 @@ export default function ScanPage() {
     await lookupResident(qr);
   }
 
-  async function startCamera() {
-    if (scannerRef.current) {
-      return;
-    }
-
-    try {
-      const scanner = new Html5QrcodeScanner(
-        "reader",
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-        },
-        false,
-      );
-
-      await scanner.render(
-        async (decodedText) => {
-          setQr(decodedText);
-          await lookupResident(decodedText);
-          setCameraActive(false);
-          try {
-            await scanner.clear();
-          } catch {
-            // Ignore cleanup errors.
-          }
-          scannerRef.current = null;
-        },
-        () => {
-          // Ignore transient scanner errors while waiting for a valid QR.
-        },
-      );
-
-      scannerRef.current = scanner;
-      setCameraActive(true);
-      toast.success("Camera ready. Point it at the QR code.");
-    } catch {
-      toast.error("Unable to start the camera scanner. Please try again or upload an image instead.");
-    }
-  }
-
   async function stopCamera() {
     if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+      } catch {
+        // Ignore cleanup errors.
+      }
       try {
         await scannerRef.current.clear();
       } catch {
@@ -118,6 +81,49 @@ export default function ScanPage() {
       scannerRef.current = null;
     }
     setCameraActive(false);
+  }
+
+  async function startCamera() {
+    if (scannerRef.current) {
+      return;
+    }
+
+    setCameraActive(true);
+
+    try {
+      const cameras = await Html5Qrcode.getCameras();
+      if (!cameras.length) {
+        toast.error("No camera was found on this device.");
+        await stopCamera();
+        return;
+      }
+
+      const preferredCamera = cameras.find((camera) => /back|rear|environment/i.test(camera.label)) ?? cameras[0];
+      const html5QrCode = new Html5Qrcode("reader");
+
+      await html5QrCode.start(
+        preferredCamera.id,
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+        },
+        async (decodedText) => {
+          setQr(decodedText);
+          await lookupResident(decodedText);
+          await stopCamera();
+        },
+        () => {
+          // Ignore transient recognition errors while scanning.
+        },
+      );
+
+      scannerRef.current = html5QrCode;
+      toast.success("Camera ready. Point it at the QR code.");
+    } catch {
+      await stopCamera();
+      toast.error("Unable to start the camera scanner. Please try again or upload an image instead.");
+    }
   }
 
   async function handleFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
@@ -186,11 +192,9 @@ export default function ScanPage() {
             )}
           </div>
 
-          {cameraActive && (
-            <div className="rounded-lg border bg-muted/40 p-2">
-              <div id="reader" className="min-h-[280px] w-full rounded-md bg-black/90" />
-            </div>
-          )}
+          <div className={cameraActive ? "rounded-lg border bg-muted/40 p-2" : "hidden"}>
+            <div id="reader" className="min-h-[280px] w-full rounded-md bg-black/90" />
+          </div>
 
           {previewUrl && (
             <div className="rounded-lg border bg-muted/40 p-2">
