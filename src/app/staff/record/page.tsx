@@ -47,7 +47,13 @@ function RecordForm() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed");
+      if (!res.ok) {
+        const message =
+          typeof data.error === "string"
+            ? data.error
+            : data.error?.message ?? data.error?.issues?.[0]?.message ?? "Failed to record recycling";
+        throw new Error(message);
+      }
       toast.success(`Recorded! ${data.pointsEarned} points awarded.`);
       router.push("/staff");
     } catch (err) {

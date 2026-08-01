@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.flatten() }, { status: 400 });
     }
     console.error("[recycling POST]", error);
-    return NextResponse.json({ error: "Failed to record recycling" }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to record recycling" }, { status: 500 });
   }
 }
 
