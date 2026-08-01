@@ -76,7 +76,9 @@ export function RewardsCatalog({
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {rewards.map((reward) => {
-          const canRedeem = currentBalance >= reward.pointsCost && reward.stock > 0;
+          const hasEnoughPoints = currentBalance >= reward.pointsCost;
+          const hasStock = (reward.stock ?? 0) > 0;
+          const canRedeem = hasEnoughPoints && hasStock;
           return (
             <Card key={reward.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -101,7 +103,13 @@ export function RewardsCatalog({
                   disabled={!canRedeem || loading === reward.id}
                   onClick={() => redeem(reward.id)}
                 >
-                  {loading === reward.id ? "Processing..." : canRedeem ? "Redeem" : "Insufficient points"}
+                  {loading === reward.id
+                    ? "Processing..."
+                    : canRedeem
+                      ? "Redeem"
+                      : hasStock
+                        ? "Insufficient points"
+                        : "Out of stock"}
                 </Button>
               </CardContent>
             </Card>
