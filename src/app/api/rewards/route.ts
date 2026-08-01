@@ -39,13 +39,17 @@ export async function POST(request: Request) {
       ensureWallet(userId),
     ]);
 
-    if (!reward || reward.stock <= 0) {
-      return NextResponse.json({ error: "Reward unavailable" }, { status: 400 });
+    if (!reward) {
+      return NextResponse.json({ error: "Reward not found" }, { status: 404 });
+    }
+
+    if (reward.stock <= 0) {
+      return NextResponse.json({ error: "Reward out of stock" }, { status: 400 });
     }
 
     const balance = wallet?.balance ?? 0;
     if (balance < reward.pointsCost) {
-      return NextResponse.json({ error: "Insufficient points" }, { status: 400 });
+      return NextResponse.json({ error: `Insufficient points. You need ${reward.pointsCost} points but have ${balance}.` }, { status: 400 });
     }
 
     const redemption = await db.$transaction(async (tx) => {

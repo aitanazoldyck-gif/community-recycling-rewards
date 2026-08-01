@@ -40,7 +40,9 @@ export function RewardsCatalog({
         body: JSON.stringify({ rewardId }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Redemption failed");
+      if (!res.ok) {
+        throw new Error(data.error ?? "Redemption failed");
+      }
       const reward = rewards.find((item) => item.id === rewardId);
       if (reward) {
         setCurrentBalance((prev) => prev - reward.pointsCost);
