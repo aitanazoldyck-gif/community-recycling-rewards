@@ -4,30 +4,43 @@ import { db } from "@/lib/db";
 import { formatPoints } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { RewardsCatalog } from "@/components/resident/rewards-catalog";
 
 export default async function WalletPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const wallet = await db.rewardWallet.findUnique({
-    where: { residentId: session.user.id },
-    include: {
-      transactions: {
-        orderBy: { createdAt: "desc" },
-        take: 20,
+  const [wallet, rewards, redemptions] = await Promise.all([
+    db.rewardWallet.findUnique({
+      where: { residentId: session.user.id },
+      include: {
+        transactions: {
+          orderBy: { createdAt: "desc" },
+          take: 20,
+        },
       },
-    },
-  });
+    }),
+    db.reward.findMany({
+      where: { isActive: true, deletedAt: null, stock: { gt: 0 } },
+      orderBy: { pointsCost: "asc" },
+    }),
+    db.redemptionRequest.findMany({
+      where: { userId: session.user.id, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      include: { reward: true },
+    }),
+  ]);
 
   const balance = wallet?.balance ?? 0;
   const lifetime = wallet?.lifetime ?? 0;
   const transactions = wallet?.transactions ?? [];
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold">Reward Wallet</h1>
-        <p className="text-muted-foreground">Your points balance and transaction history</p>
+        <p className="text-muted-foreground">Your points balance, transaction history, and reward redemptions</p>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -84,6 +97,8 @@ export default async function WalletPage() {
           )}
         </CardContent>
       </Card>
+
+      <RewardsCatalog rewards={rewards} balance={balance} redemptions={redemptions} />
     </div>
   );
 }
