@@ -80,7 +80,7 @@ export function RewardsCatalog({
           const hasStock = (reward.stock ?? 0) > 0;
           const canRedeem = hasEnoughPoints && hasStock;
           return (
-            <Card key={reward.id} className="hover:shadow-lg transition-shadow">
+            <Card key={reward.id} className="hover:shadow-lg transition-shadow border-primary/10">
               <CardHeader>
                 <div className="flex justify-between items-start gap-2">
                   <CardTitle className="text-lg">{reward.name}</CardTitle>
@@ -100,6 +100,7 @@ export function RewardsCatalog({
                 <p className="text-xs text-muted-foreground">{reward.stock} in stock</p>
                 <Button
                   className="w-full"
+                  variant={canRedeem ? "default" : "secondary"}
                   disabled={!canRedeem || loading === reward.id}
                   onClick={() => redeem(reward.id)}
                 >
