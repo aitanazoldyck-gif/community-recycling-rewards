@@ -21,6 +21,8 @@ export function RewardsCatalog({
   redemptions: RedemptionWithReward[];
 }) {
   const [loading, setLoading] = useState<string | null>(null);
+  const [currentBalance, setCurrentBalance] = useState(balance);
+  const [currentRedemptions, setCurrentRedemptions] = useState(redemptions);
 
   async function redeem(rewardId: string) {
     setLoading(rewardId);
@@ -32,8 +34,27 @@ export function RewardsCatalog({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Redemption failed");
+      const reward = rewards.find((item) => item.id === rewardId);
+      if (reward) {
+        setCurrentBalance((prev) => prev - reward.pointsCost);
+        setCurrentRedemptions((prev) => [
+          {
+            id: data.id,
+            userId: "",
+            rewardId,
+            points: reward.pointsCost,
+            status: "PENDING",
+            notes: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            deletedAt: null,
+            fulfilledAt: null,
+            reward,
+          } as RedemptionWithReward,
+          ...prev,
+        ]);
+      }
       toast.success("Redemption submitted for approval!");
-      window.location.reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed");
     } finally {
@@ -46,13 +67,13 @@ export function RewardsCatalog({
       <div>
         <h1 className="text-2xl font-bold">Redeem Rewards</h1>
         <p className="text-muted-foreground">
-          Available balance: <span className="font-semibold text-primary">{formatPoints(balance)} pts</span>
+          Available balance: <span className="font-semibold text-primary">{formatPoints(currentBalance)} pts</span>
         </p>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {rewards.map((reward) => {
-          const canRedeem = balance >= reward.pointsCost && reward.stock > 0;
+          const canRedeem = currentBalance >= reward.pointsCost && reward.stock > 0;
           return (
             <Card key={reward.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -85,13 +106,13 @@ export function RewardsCatalog({
         })}
       </div>
 
-      {redemptions.length > 0 && (
+      {currentRedemptions.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Recent redemptions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {redemptions.map((r) => (
+            {currentRedemptions.map((r) => (
               <div key={r.id} className="flex justify-between items-center rounded-xl border p-3">
                 <div>
                   <p className="font-medium">{r.reward.name}</p>
