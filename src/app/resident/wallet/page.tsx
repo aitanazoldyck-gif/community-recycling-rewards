@@ -4,7 +4,9 @@ import { db } from "@/lib/db";
 import { formatPoints } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { RewardsCatalog } from "@/components/resident/rewards-catalog";
+import { RedeemCard } from "@/components/resident/redeem-card";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +63,8 @@ export default async function WalletPage() {
           </CardContent>
         </Card>
       </div>
+
+      <RedeemCard balance={balance} />
 
       <Card>
         <CardHeader>
