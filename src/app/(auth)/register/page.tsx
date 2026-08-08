@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { registerSchema, type RegisterInput } from "@/lib/validators/auth";
+import { handleAuthError, showAuthErrorToast } from "@/lib/auth-error-handler";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -28,72 +29,98 @@ export default function RegisterPage() {
   });
 
   async function onSubmit(data: RegisterInput) {
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    let json: any;
     try {
-      json = await res.json();
-    } catch (fetchError) {
-      toast.error("Registration failed. Server returned an invalid response.");
-      return;
-    }
-
-    if (!res.ok) {
-      let toastMessage = "Registration failed. Please check your details.";
-
-      if (json?.error && typeof json.error === "object") {
-        for (const [field, messages] of Object.entries(json.error)) {
-          if (Array.isArray(messages) && messages.length > 0) {
-            setError(field as keyof RegisterInput, {
-              type: "server",
-              message: String(messages[0]),
-            });
-            toastMessage = String(messages[0]);
-            break;
-          }
-        }
-      }
-
-      if (typeof json.error === "string") {
-        toastMessage = json.error;
-      } else if (Array.isArray(json?.error)) {
-        toastMessage = json.error.join(" ");
-      }
-
-      toast.error(toastMessage);
-      return;
-    }
-
-    toast.success(
-      json.autoVerified
-        ? "Account created! Signing you in..."
-        : "Account created! Check your email to verify."
-    );
-
-    if (json.autoVerified) {
-      const signInResult = await signIn("credentials", {
-        email: data.email.trim().toLowerCase(),
-        password: data.password,
-        redirect: false,
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
 
-      if (!signInResult?.error) {
+      let json: any;
+      try {
+        json = await res.json();
+      } catch (fetchError) {
+        const errorToast = showAuthErrorToast(fetchError);
+        toast.error(errorToast.title, {
+          description: errorToast.message,
+        });
+        return;
+      }
+
+      if (!res.ok) {
+        let toastMessage = "Registration failed. Please check your details.";
+
+        if (json?.error && typeof json.error === "object") {
+          for (const [field, messages] of Object.entries(json.error)) {
+            if (Array.isArray(messages) && messages.length > 0) {
+              setError(field as keyof RegisterInput, {
+                type: "server",
+                message: String(messages[0]),
+              });
+              toastMessage = String(messages[0]);
+              break;
+            }
+          }
+        }
+
+        if (typeof json.error === "string") {
+          toastMessage = json.error;
+        } else if (Array.isArray(json?.error)) {
+          toastMessage = json.error.join(" ");
+        }
+
+        toast.error(toastMessage);
+        return;
+      }
+
+      toast.success(
+        json.autoVerified
+          ? "Account created! Signing you in..."
+          : "Account created! Check your email to verify."
+      );
+
+      if (json.autoVerified) {
+        const signInResult = await signIn("credentials", {
+          email: data.email.trim().toLowerCase(),
+          password: data.password,
+          redirect: false,
+        });
+
+        if (signInResult?.error) {
+          const errorToast = showAuthErrorToast(signInResult);
+          toast.error(errorToast.title, {
+            description: errorToast.message,
+          });
+          router.push("/login");
+          return;
+        }
+
         router.push("/resident");
         router.refresh();
         return;
       }
-    }
 
-    router.push("/login");
+      router.push("/login");
+    } catch (error) {
+      const errorToast = showAuthErrorToast(error);
+      toast.error(errorToast.title, {
+        description: errorToast.message,
+      });
+    }
   }
 
   async function handleGoogle() {
-    setGoogleLoading(true);
-    await signIn("google", { callbackUrl: "/resident" });
+    try {
+      setGoogleLoading(true);
+      await signIn("google", { callbackUrl: "/resident" });
+    } catch (error) {
+      const errorToast = showAuthErrorToast(error);
+      toast.error(errorToast.title, {
+        description: errorToast.message,
+      });
+    } finally {
+      setGoogleLoading(false);
+    }
   }
 
   return (

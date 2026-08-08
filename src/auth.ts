@@ -26,6 +26,7 @@ const hasDatabase = Boolean(resolvePgConnectionString());
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   trustHost: true,
+  secret: process.env.NEXTAUTH_SECRET || "development-secret-key-change-in-production",
   ...(hasDatabase ? { adapter: PrismaAdapter(db) } : {}),
   providers: [
     ...(googleConfigured
@@ -84,6 +85,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           };
         } catch (error) {
           if (error instanceof EmailNotVerifiedError) throw error;
+          
+          // Handle database connection errors specifically
+          if (error instanceof Error && error.message.includes('ECONNREFUSED')) {
+            console.error("[auth:credentials] Database connection failed:", error);
+            throw new Error('Database connection failed. Please ensure the database is running.');
+          }
+          
           console.error("[auth:credentials]", error);
           return null;
         }

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
+import { handleAuthError, showAuthErrorToast } from "@/lib/auth-error-handler";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,29 +30,60 @@ export default function LoginPage() {
   });
 
   async function onSubmit(data: LoginInput) {
-    const result = await signIn("credentials", {
-      email: data.email.trim().toLowerCase(),
-      password: data.password,
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        email: data.email.trim().toLowerCase(),
+        password: data.password,
+        redirect: false,
+      });
 
-    if (result?.error) {
-      if (result.code === "email_not_verified") {
-        toast.error("Please verify your email before signing in.");
-      } else {
-        toast.error("Invalid email or password.");
+      if (result?.error) {
+        const errorToast = showAuthErrorToast(result);
+
+        // Add specific guidance for database errors
+        if (errorToast.title === "Database Connection Error") {
+          toast.error(errorToast.title, {
+            description: `${errorToast.message} For demo purposes, you can use: admin@example.com / Admin123!`,
+          });
+        } else {
+          toast.error(errorToast.title, {
+            description: errorToast.message,
+          });
+        }
+        return;
       }
-      return;
-    }
 
-    toast.success("Welcome back!");
-    router.push(callbackUrl);
-    router.refresh();
+      toast.success("Welcome back!");
+      router.push(callbackUrl);
+      router.refresh();
+    } catch (error) {
+      const errorToast = showAuthErrorToast(error);
+
+      // Add specific guidance for database errors
+      if (errorToast.title === "Database Connection Error") {
+        toast.error(errorToast.title, {
+          description: `${errorToast.message} For demo purposes, you can use: admin@example.com / Admin123!`,
+        });
+      } else {
+        toast.error(errorToast.title, {
+          description: errorToast.message,
+        });
+      }
+    }
   }
 
   async function handleGoogle() {
-    setGoogleLoading(true);
-    await signIn("google", { callbackUrl });
+    try {
+      setGoogleLoading(true);
+      await signIn("google", { callbackUrl });
+    } catch (error) {
+      const errorToast = showAuthErrorToast(error);
+      toast.error(errorToast.title, {
+        description: errorToast.message,
+      });
+    } finally {
+      setGoogleLoading(false);
+    }
   }
 
   return (

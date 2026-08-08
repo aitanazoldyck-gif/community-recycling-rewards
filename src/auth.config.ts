@@ -2,6 +2,7 @@ import type { NextAuthConfig } from "next-auth";
 import type { UserRole } from "@/generated/prisma/enums";
 
 export const authConfig = {
+  secret: process.env.NEXTAUTH_SECRET || "development-secret-key-change-in-production",
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: {
     signIn: "/login",
