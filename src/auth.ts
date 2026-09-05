@@ -8,6 +8,7 @@ import { resolvePgConnectionString } from "@/lib/database-url";
 import type { UserRole } from "@/generated/prisma/enums";
 import { loginSchema } from "@/lib/validators/auth";
 import { authConfig } from "@/auth.config";
+import { ensureDemoUsers } from "@/lib/bootstrap-users";
 
 class EmailNotVerifiedError extends CredentialsSignin {
   code = "email_not_verified";
@@ -58,6 +59,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         try {
+          await ensureDemoUsers();
           const user = await db.user.findUnique({
             where: { email: parsed.data.email },
           });
