@@ -48,12 +48,23 @@ Before registering an account, make sure PostgreSQL is running and the database
 in `DATABASE_URL` exists. Check the connection with:
 
 ```powershell
+npm run db:check
 npm run db:push
 ```
 
 If this reports `P1001: Can't reach database server`, update `.env.local` with a
 reachable PostgreSQL URL or use the `DATABASE_URL` supplied by your hosting
 provider. The application cannot create accounts until the database is reachable.
+
+For a local PostgreSQL installation, use a URL like:
+
+```env
+DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/community_recycling_rewards?schema=public"
+```
+
+Create the database if needed, then run `npm run db:push` and `npm run db:seed`.
+Alternatively, create a hosted PostgreSQL database and paste its connection URL
+into `.env.local`. Do not use the placeholder `user:password` URL.
 
 Optional (features work with fallbacks without these):
 
