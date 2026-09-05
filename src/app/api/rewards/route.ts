@@ -26,6 +26,12 @@ const redeemSchema = z.object({
   rewardId: z.string().min(1),
 });
 
+const updateRedemptionSchema = z.object({
+  id: z.string().min(1),
+  status: z.enum(["APPROVED", "REJECTED", "FULFILLED", "CANCELLED"]),
+  notes: z.string().optional(),
+});
+
 export async function POST(request: Request) {
   const authResult = await requireRole(["RESIDENT"]);
   if ("error" in authResult) return authResult.error;
@@ -47,9 +53,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Reward out of stock" }, { status: 400 });
     }
 
-    const balance = wallet?.balance ?? 0;
-    if (balance < reward.pointsCost) {
-      return NextResponse.json({ error: `Insufficient points. You need ${reward.pointsCost} points but have ${balance}.` }, { status: 400 });
+    if (wallet.balance < reward.pointsCost) {
+      return NextResponse.json(
+        {
+          error: `Insufficient points. You need ${reward.pointsCost} points but have ${wallet.balance}.`,
+        },
+        { status: 400 }
+      );
     }
 
     const redemption = await db.$transaction(async (tx) => {
@@ -58,30 +68,9 @@ export async function POST(request: Request) {
           userId,
           rewardId: reward.id,
           points: reward.pointsCost,
+          status: "PENDING",
         },
         include: { reward: true },
-      });
-
-      await tx.reward.update({
-        where: { id: reward.id },
-        data: { stock: { decrement: 1 } },
-      });
-
-      const newBalance = balance - reward.pointsCost;
-      await tx.rewardWallet.update({
-        where: { id: wallet.id },
-        data: { balance: newBalance },
-      });
-      await tx.rewardTransaction.create({
-        data: {
-          walletId: wallet.id,
-          userId,
-          type: "REDEEM",
-          amount: -reward.pointsCost,
-          balanceAfter: newBalance,
-          description: `Redeemed: ${reward.name}`,
-          referenceId: req.id,
-        },
       });
 
       await tx.notification.create({
@@ -111,13 +100,112 @@ export async function PATCH(request: Request) {
   if ("error" in authResult) return authResult.error;
 
   try {
-    const { id, status, notes } = await request.json();
-    const redemption = await db.redemptionRequest.update({
+    const { id, status, notes } = updateRedemptionSchema.parse(await request.json());
+
+    const redemption = await db.redemptionRequest.findUnique({
+      where: { id },
+      include: {
+        reward: true,
+        user: { select: { id: true, name: true } },
+      },
+    });
+
+    if (!redemption) {
+      return NextResponse.json({ error: "Redemption request not found" }, { status: 404 });
+    }
+
+    const actionIsApproval = status === "APPROVED" || status === "FULFILLED";
+    const isTerminalState = ["REJECTED", "CANCELLED", "FULFILLED"].includes(redemption.status);
+
+    if (isTerminalState && status !== redemption.status) {
+      return NextResponse.json({ error: "This redemption request is already closed." }, { status: 400 });
+    }
+
+    if (actionIsApproval) {
+      const wallet = await ensureWallet(redemption.userId);
+      if (wallet.balance < redemption.points) {
+        return NextResponse.json(
+          {
+            error: `This resident does not have enough points for this redemption. Required: ${redemption.points}, available: ${wallet.balance}.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      const updated = await db.$transaction(async (tx) => {
+        const currentWallet = await tx.rewardWallet.findUnique({
+          where: { residentId: redemption.userId },
+        });
+
+        if (!currentWallet) {
+          throw new Error("Resident wallet not found");
+        }
+
+        if (currentWallet.balance < redemption.points) {
+          throw new Error("Insufficient resident points");
+        }
+
+        const newBalance = currentWallet.balance - redemption.points;
+
+        const nextStatus = status === "FULFILLED" ? "FULFILLED" : "APPROVED";
+
+        const updatedRedemption = await tx.redemptionRequest.update({
+          where: { id },
+          data: {
+            status: nextStatus,
+            notes,
+            fulfilledAt: status === "FULFILLED" ? new Date() : null,
+          },
+          include: {
+            reward: true,
+            user: { select: { id: true, name: true } },
+          },
+        });
+
+        await tx.rewardWallet.update({
+          where: { id: currentWallet.id },
+          data: { balance: newBalance },
+        });
+
+        await tx.rewardTransaction.create({
+          data: {
+            walletId: currentWallet.id,
+            userId: redemption.userId,
+            type: "REDEEM",
+            amount: -redemption.points,
+            balanceAfter: newBalance,
+            description: `Approved redemption: ${redemption.reward.name}`,
+            referenceId: redemption.id,
+          },
+        });
+
+        await tx.reward.update({
+          where: { id: redemption.rewardId },
+          data: { stock: { decrement: 1 } },
+        });
+
+        await tx.notification.create({
+          data: {
+            userId: redemption.userId,
+            title: "Redemption approved",
+            message: `Your redemption for "${redemption.reward.name}" has been approved and ${redemption.points} points were deducted from your balance.`,
+            type: "reward",
+            link: "/resident/rewards",
+          },
+        });
+
+        return updatedRedemption;
+      });
+
+      return NextResponse.json(updated);
+    }
+
+    const updated = await db.redemptionRequest.update({
       where: { id },
       data: {
         status,
         notes,
-        fulfilledAt: status === "FULFILLED" ? new Date() : undefined,
+        fulfilledAt: null,
       },
       include: { reward: true, user: { select: { id: true, name: true } } },
     });
@@ -126,14 +214,17 @@ export async function PATCH(request: Request) {
       data: {
         userId: redemption.userId,
         title: "Redemption update",
-        message: `Your redemption for "${redemption.reward.name}" is ${status.toLowerCase()}.`,
+        message: `Your redemption for "${redemption.reward.name}" was ${status.toLowerCase()}.`,
         type: "reward",
         link: "/resident/rewards",
       },
     });
 
-    return NextResponse.json(redemption);
-  } catch {
-    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+    return NextResponse.json(updated);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.flatten() }, { status: 400 });
+    }
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Update failed" }, { status: 500 });
   }
 }

@@ -16,25 +16,31 @@ type Redemption = {
   reward: { name: string };
 };
 
-const STATUSES = ["PENDING", "APPROVED", "FULFILLED", "REJECTED", "CANCELLED"];
+const ACTIONS = [
+  { label: "Approve", status: "APPROVED" },
+  { label: "Reject", status: "REJECTED" },
+] as const;
 
 export function RedemptionManager({ initial }: { initial: Redemption[] }) {
   const [redemptions, setRedemptions] = useState(initial);
 
-  async function updateStatus(id: string, status: string) {
+  async function updateStatus(id: string, status: "APPROVED" | "REJECTED") {
     try {
       const res = await fetch("/api/rewards", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status }),
       });
-      if (!res.ok) throw new Error("Failed");
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error ?? "Failed");
+      }
       setRedemptions((prev) =>
         prev.map((r) => (r.id === id ? { ...r, status } : r))
       );
-      toast.success(`Redemption marked as ${status.toLowerCase()}`);
-    } catch {
-      toast.error("Update failed");
+      toast.success(`Redemption ${status === "APPROVED" ? "approved" : "rejected"}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Update failed");
     }
   }
 
@@ -67,14 +73,14 @@ export function RedemptionManager({ initial }: { initial: Redemption[] }) {
             </p>
             {r.status === "PENDING" && (
               <div className="flex flex-wrap gap-2 pt-2">
-                {STATUSES.filter((s) => s !== "PENDING").map((s) => (
+                {ACTIONS.map((action) => (
                   <Button
-                    key={s}
-                    variant="outline"
+                    key={action.status}
+                    variant={action.status === "APPROVED" ? "default" : "outline"}
                     size="sm"
-                    onClick={() => updateStatus(r.id, s)}
+                    onClick={() => updateStatus(r.id, action.status)}
                   >
-                    {s.charAt(0) + s.slice(1).toLowerCase()}
+                    {action.label}
                   </Button>
                 ))}
               </div>
