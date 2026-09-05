@@ -189,9 +189,10 @@ Render deploys from Git. Initialize and push this project to a GitHub repository
 
 1. **New** → **Web Service** → connect your GitHub repo
 2. **Runtime:** Node
-3. **Build Command:** `npm install && npm run build:render`
-4. **Start Command:** `npm run start`
-5. **Pre-Deploy Command (optional):** `npx prisma db seed`
+3. **Root Directory:** leave blank (repository root), or set it to `.`. Do not set it to `src`.
+4. **Build Command:** `npm install && npm run build:render`
+5. **Start Command:** `npm run start`
+6. **Pre-Deploy Command (optional):** `npx prisma db seed`
 
 Or use the included `render.yaml` blueprint: **New** → **Blueprint** → select repo.
 

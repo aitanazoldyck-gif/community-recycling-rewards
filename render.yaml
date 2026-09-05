@@ -10,6 +10,7 @@ databases:
 services:
   - type: web
     name: ecorewards
+    rootDir: .
     runtime: node
     plan: free
     buildCommand: npm install && npm run build:render
