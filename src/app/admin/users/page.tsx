@@ -36,7 +36,7 @@ function DatabaseErrorPanel({ message }: { message: string }) {
   );
 }
 
-export default async function AdminUsersPage() {
+async function loadUsers() {
   try {
     await ensureDemoUsers();
 
@@ -54,7 +54,31 @@ export default async function AdminUsersPage() {
       },
     });
 
+    return { users, error: null };
+  } catch (error) {
+    return {
+      users: [],
+      error: error instanceof Error ? error.message : "Unable to load users from the database.",
+    };
+  }
+}
+
+export default async function AdminUsersPage() {
+  const { users, error } = await loadUsers();
+
+  if (error) {
     return (
+      <div className="space-y-6 max-w-6xl mx-auto">
+        <div>
+          <h1 className="text-2xl font-bold">Manage Users</h1>
+          <p className="text-muted-foreground">User management is unavailable until the database is connected.</p>
+        </div>
+        <DatabaseErrorPanel message={error} />
+      </div>
+    );
+  }
+
+  return (
       <div className="space-y-6 max-w-6xl mx-auto">
         <div>
           <h1 className="text-2xl font-bold">Manage Users</h1>
@@ -122,19 +146,5 @@ export default async function AdminUsersPage() {
           </CardContent>
         </Card>
       </div>
-    );
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unable to load users from the database.";
-
-    return (
-      <div className="space-y-6 max-w-6xl mx-auto">
-        <div>
-          <h1 className="text-2xl font-bold">Manage Users</h1>
-          <p className="text-muted-foreground">User management is unavailable until the database is connected.</p>
-        </div>
-        <DatabaseErrorPanel message={message} />
-      </div>
-    );
-  }
+  );
 }
