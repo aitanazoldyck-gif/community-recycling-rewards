@@ -13,7 +13,7 @@ services:
     runtime: node
     plan: free
     buildCommand: npm install && npm run build:render
-    preDeployCommand: npx prisma db seed
+    preDeployCommand: npx prisma db push && npx prisma db seed
     startCommand: npm run start
     healthCheckPath: /
     envVars:
