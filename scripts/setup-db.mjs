@@ -14,7 +14,9 @@ if (databaseUrl.includes("user:password@localhost")) {
 }
 
 console.log("[setup-db] Applying Prisma schema...");
-execSync("npx prisma db push --skip-generate", {
+// Prisma 7 does not accept --skip-generate in this command; schema generation
+// already happens in the build step, so we only need to push the schema here.
+execSync("npx prisma db push", {
   stdio: "inherit",
   env: process.env,
 });
