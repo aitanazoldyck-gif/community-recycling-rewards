@@ -23,7 +23,10 @@ export async function GET() {
 }
 
 const redeemSchema = z.object({
-  rewardId: z.string().min(1),
+  rewardId: z.string().min(1).optional(),
+  points: z.number().int().positive().optional(),
+}).refine((data) => data.rewardId || data.points, {
+  message: "A reward or points amount is required",
 });
 
 const updateRedemptionSchema = z.object({
@@ -37,26 +40,37 @@ export async function POST(request: Request) {
   if ("error" in authResult) return authResult.error;
 
   try {
-    const { rewardId } = redeemSchema.parse(await request.json());
+    const { rewardId, points } = redeemSchema.parse(await request.json());
     const userId = authResult.session.user.id;
 
-    const [reward, wallet] = await Promise.all([
-      db.reward.findFirst({ where: { id: rewardId, isActive: true, deletedAt: null } }),
+    const [requestedReward, wallet] = await Promise.all([
+      rewardId
+        ? db.reward.findFirst({ where: { id: rewardId, isActive: true, deletedAt: null } })
+        : db.reward.findFirst({
+            where: {
+              isActive: true,
+              deletedAt: null,
+              stock: { gt: 0 },
+              pointsCost: { lte: points },
+            },
+            orderBy: { pointsCost: "desc" },
+          }),
       ensureWallet(userId),
     ]);
 
-    if (!reward) {
+    if (!requestedReward) {
       return NextResponse.json({ error: "Reward not found" }, { status: 404 });
     }
 
-    if (reward.stock <= 0) {
+    if (requestedReward.stock <= 0) {
       return NextResponse.json({ error: "Reward out of stock" }, { status: 400 });
     }
 
-    if (wallet.balance < reward.pointsCost) {
+    const redemptionPoints = points ?? requestedReward.pointsCost;
+    if (wallet.balance < redemptionPoints) {
       return NextResponse.json(
         {
-          error: `Insufficient points. You need ${reward.pointsCost} points but have ${wallet.balance}.`,
+          error: `Insufficient points. You need ${redemptionPoints} points but have ${wallet.balance}.`,
         },
         { status: 400 }
       );
@@ -66,8 +80,8 @@ export async function POST(request: Request) {
       const req = await tx.redemptionRequest.create({
         data: {
           userId,
-          rewardId: reward.id,
-          points: reward.pointsCost,
+          rewardId: requestedReward.id,
+          points: redemptionPoints,
           status: "PENDING",
         },
         include: { reward: true },
@@ -77,7 +91,7 @@ export async function POST(request: Request) {
         data: {
           userId,
           title: "Redemption submitted",
-          message: `Your request for "${reward.name}" is pending approval.`,
+          message: `Your request to redeem ${redemptionPoints} points is pending approval.`,
           type: "reward",
           link: "/resident/rewards",
         },

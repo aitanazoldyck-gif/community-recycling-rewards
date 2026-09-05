@@ -9,39 +9,25 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 const REDEEM_THRESHOLD = 150;
-type AvailableReward = { id: string; name: string; pointsCost: number; stock: number };
 
 export function RedeemCard({ balance }: { balance: number }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [currentBalance, setCurrentBalance] = useState(balance);
+  const [redeemAmount, setRedeemAmount] = useState(String(Math.min(REDEEM_THRESHOLD, balance)));
 
-  const canRedeem = currentBalance >= REDEEM_THRESHOLD;
+  const amount = Number(redeemAmount);
+  const canRedeem = Number.isInteger(amount) && amount >= REDEEM_THRESHOLD && amount <= currentBalance;
 
   async function handleRedeem() {
     if (!canRedeem) return;
 
     setLoading(true);
     try {
-      // Get available rewards that cost 150 points or less
-      const res = await fetch("/api/rewards");
-      const rewards = (await res.json()) as AvailableReward[];
-
-      // Find a reward that costs exactly 150 points or the closest available
-      const eligibleReward = rewards.find(
-        (reward) => reward.pointsCost <= currentBalance && reward.stock > 0
-      );
-
-      if (!eligibleReward) {
-        toast.error("No rewards available for redemption at this time");
-        return;
-      }
-
-      // Redeem the reward
       const redeemRes = await fetch("/api/rewards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rewardId: eligibleReward.id }),
+        body: JSON.stringify({ points: amount }),
       });
 
       const data = await redeemRes.json();
@@ -49,8 +35,9 @@ export function RedeemCard({ balance }: { balance: number }) {
         throw new Error(data.error ?? "Redemption failed");
       }
 
-      setCurrentBalance((prev) => prev - eligibleReward.pointsCost);
-      toast.success(`Successfully redeemed "${eligibleReward.name}"!`);
+      setCurrentBalance((prev) => prev - amount);
+      setRedeemAmount("");
+      toast.success(`${amount} points submitted for approval!`);
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to redeem");
@@ -76,11 +63,7 @@ export function RedeemCard({ balance }: { balance: number }) {
             {isEligible ? "Eligible" : `${pointsNeeded} pts needed`}
           </Badge>
         </div>
-        <p className="text-sm text-muted-foreground">
-          {isEligible
-            ? "Congratulations! You have enough points to redeem a reward."
-            : `You need ${pointsNeeded} more points to redeem a reward.`}
-        </p>
+        <p className="text-sm text-muted-foreground">Enter the points amount you want to redeem.</p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
@@ -93,6 +76,20 @@ export function RedeemCard({ balance }: { balance: number }) {
             <p className="text-sm text-muted-foreground">points needed</p>
           </div>
         </div>
+        <div className="space-y-2">
+          <label htmlFor="redeem-amount" className="text-sm font-medium">Points to redeem</label>
+          <input
+            id="redeem-amount"
+            type="number"
+            min={REDEEM_THRESHOLD}
+            max={currentBalance}
+            step="1"
+            value={redeemAmount}
+            onChange={(event) => setRedeemAmount(event.target.value)}
+            className="flex h-11 w-full rounded-xl border border-border/80 bg-white/80 px-4 text-sm dark:bg-white/5"
+          />
+          <p className="text-xs text-muted-foreground">Minimum: {formatPoints(REDEEM_THRESHOLD)} pts. Maximum: {formatPoints(currentBalance)} pts.</p>
+        </div>
         <Button
           className="w-full"
           variant={isEligible ? "default" : "secondary"}
@@ -100,9 +97,9 @@ export function RedeemCard({ balance }: { balance: number }) {
           onClick={handleRedeem}
           size="lg"
         >
-          {loading ? "Processing..." : isEligible ? "Redeem Now" : "Earn More Points"}
+          {loading ? "Processing..." : canRedeem ? "Redeem Points" : "Enter a valid amount"}
         </Button>
-        {!isEligible && (
+        {!canRedeem && (
           <p className="text-xs text-center text-muted-foreground">
             Continue recycling to earn more points and unlock rewards!
           </p>

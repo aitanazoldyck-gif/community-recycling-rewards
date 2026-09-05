@@ -20,7 +20,6 @@ function RecordForm() {
     residentId: searchParams.get("residentId") ?? "",
     wasteCategoryId: "",
     weightKg: "",
-    quantity: "1",
     notes: "",
   });
 
@@ -42,7 +41,6 @@ function RecordForm() {
           residentId: form.residentId,
           wasteCategoryId: form.wasteCategoryId,
           weightKg: parseFloat(form.weightKg),
-          quantity: parseInt(form.quantity, 10),
           notes: form.notes || undefined,
         }),
       });
@@ -108,29 +106,17 @@ function RecordForm() {
                 ))}
               </select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="weight">Weight (kg)</Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  value={form.weightKg}
-                  onChange={(e) => setForm({ ...form, weightKg: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="qty">Quantity</Label>
-                <Input
-                  id="qty"
-                  type="number"
-                  min="1"
-                  value={form.quantity}
-                  onChange={(e) => setForm({ ...form, quantity: e.target.value })}
-                />
-              </div>
+            <div>
+              <Label htmlFor="weight">Weight (kg)</Label>
+              <Input
+                id="weight"
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={form.weightKg}
+                onChange={(e) => setForm({ ...form, weightKg: e.target.value })}
+                required
+              />
             </div>
             {estimatedPoints > 0 && (
               <p className="text-sm text-primary font-medium">
