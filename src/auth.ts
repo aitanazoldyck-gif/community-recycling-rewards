@@ -13,6 +13,10 @@ class EmailNotVerifiedError extends CredentialsSignin {
   code = "email_not_verified";
 }
 
+class DatabaseUnavailableError extends CredentialsSignin {
+  code = "database_unavailable";
+}
+
 function isSmtpConfigured() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER);
 }
@@ -89,10 +93,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         } catch (error) {
           if (error instanceof EmailNotVerifiedError) throw error;
           
-          // Handle database connection errors specifically
-          if (error instanceof Error && error.message.includes('ECONNREFUSED')) {
+          if (
+            error instanceof Error &&
+            (error.message.includes("ECONNREFUSED") ||
+              error.message.includes("DATABASE_URL is not configured"))
+          ) {
             console.error("[auth:credentials] Database connection failed:", error);
-            throw new Error('Database connection failed. Please ensure the database is running.');
+            throw new DatabaseUnavailableError();
           }
           
           console.error("[auth:credentials]", error);

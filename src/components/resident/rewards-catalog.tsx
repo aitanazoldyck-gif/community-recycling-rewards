@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatPoints, formatCurrency } from "@/lib/utils";
@@ -25,11 +25,6 @@ export function RewardsCatalog({
   const [loading, setLoading] = useState<string | null>(null);
   const [currentBalance, setCurrentBalance] = useState(balance);
   const [currentRedemptions, setCurrentRedemptions] = useState(redemptions);
-
-  useEffect(() => {
-    setCurrentBalance(balance);
-    setCurrentRedemptions(redemptions);
-  }, [balance, redemptions]);
 
   async function redeem(rewardId: string) {
     setLoading(rewardId);

@@ -20,19 +20,30 @@ export interface AuthError {
   type: AuthErrorType;
   message: string;
   userFriendlyMessage: string;
-  originalError?: any;
+  originalError?: unknown;
+}
+
+function getErrorDetails(error: unknown): Record<string, unknown> {
+  return typeof error === "object" && error !== null
+    ? (error as Record<string, unknown>)
+    : {};
+}
+
+function messageIncludes(message: unknown, search: string) {
+  return typeof message === "string" && message.toLowerCase().includes(search);
 }
 
 /**
  * Handle authentication errors and convert them to user-friendly messages
  */
-export function handleAuthError(error: any): AuthError {
+export function handleAuthError(error: unknown): AuthError {
+  const details = getErrorDetails(error);
   const errorCode =
     typeof error === "string"
       ? error
-      : typeof error?.error === "string"
-        ? error.error
-        : error?.code;
+      : typeof details.error === "string"
+        ? details.error
+        : details.code;
 
   if (errorCode === "CredentialsSignin") {
     return {
@@ -52,9 +63,18 @@ export function handleAuthError(error: any): AuthError {
     };
   }
 
+  if (errorCode === "database_unavailable") {
+    return {
+      type: "DatabaseError",
+      message: "Database connection error",
+      userFriendlyMessage: "Unable to connect to the database. Please try again later.",
+      originalError: error,
+    };
+  }
+
   // Handle specific NextAuth error codes
-  if (error?.type) {
-    switch (error.type) {
+  if (details.type) {
+    switch (details.type) {
       case "CredentialsSignin":
         return {
           type: "CredentialsSignin",
@@ -106,8 +126,8 @@ export function handleAuthError(error: any): AuthError {
   }
 
   // Handle specific error codes
-  if (error?.code) {
-    switch (error.code) {
+  if (details.code) {
+    switch (details.code) {
       case "email_not_verified":
         return {
           type: "EmailNotVerified",
@@ -135,8 +155,8 @@ export function handleAuthError(error: any): AuthError {
   }
 
   // Handle error messages
-  if (error?.message) {
-    const message = error.message.toLowerCase();
+  if (typeof details.message === "string") {
+    const message = details.message.toLowerCase();
     if (message.includes("email already exists") || message.includes("duplicate key")) {
       return {
         type: "EmailAlreadyExists",
@@ -156,7 +176,7 @@ export function handleAuthError(error: any): AuthError {
   }
 
   // Handle network errors
-  if (error?.name === "NetworkError" || error?.message?.includes("fetch") || error?.message?.includes("network")) {
+  if (details.name === "NetworkError" || messageIncludes(details.message, "fetch") || messageIncludes(details.message, "network")) {
     return {
       type: "NetworkError",
       message: "Network error",
@@ -166,7 +186,7 @@ export function handleAuthError(error: any): AuthError {
   }
 
   // Handle database errors
-  if (error?.code === "ECONNREFUSED" || error?.message?.includes("database") || error?.message?.includes("ECONNREFUSED")) {
+  if (details.code === "ECONNREFUSED" || messageIncludes(details.message, "database") || messageIncludes(details.message, "ECONNREFUSED")) {
     return {
       type: "DatabaseError",
       message: "Database connection error",
@@ -176,7 +196,7 @@ export function handleAuthError(error: any): AuthError {
   }
 
   // Handle server errors (5xx)
-  if (error?.status >= 500 || error?.message?.includes("server") || error?.message?.includes("500")) {
+  if ((typeof details.status === "number" && details.status >= 500) || messageIncludes(details.message, "server") || messageIncludes(details.message, "500")) {
     return {
       type: "ServerError",
       message: "Server error",
@@ -197,7 +217,7 @@ export function handleAuthError(error: any): AuthError {
 /**
  * Show error toast based on authentication error
  */
-export function showAuthErrorToast(error: any) {
+export function showAuthErrorToast(error: unknown) {
   const authError = handleAuthError(error);
   
   // Use different toast styles based on error type
@@ -271,7 +291,7 @@ export function showAuthErrorToast(error: any) {
 /**
  * Handle login error specifically
  */
-export function handleLoginError(error: any): string {
+export function handleLoginError(error: unknown): string {
   const authError = handleAuthError(error);
 
   // Return concise message for inline display

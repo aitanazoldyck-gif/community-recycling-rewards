@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default async function StaffReportsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - 7);
 
   const [todayCount, weekRecords, byCategory] = await Promise.all([
     db.recyclingRecord.count({
@@ -19,7 +21,7 @@ export default async function StaffReportsPage() {
     db.recyclingRecord.aggregate({
       where: {
         recordedById: session.user.id,
-        collectionDate: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        collectionDate: { gte: weekStart },
         deletedAt: null,
       },
       _sum: { weightKg: true, pointsEarned: true },

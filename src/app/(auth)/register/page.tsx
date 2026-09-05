@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { registerSchema, type RegisterInput } from "@/lib/validators/auth";
-import { handleAuthError, showAuthErrorToast } from "@/lib/auth-error-handler";
+import { showAuthErrorToast } from "@/lib/auth-error-handler";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -36,7 +36,7 @@ export default function RegisterPage() {
         body: JSON.stringify(data),
       });
 
-      let json: any;
+      let json: { error?: unknown; autoVerified?: boolean } = {};
       try {
         json = await res.json();
       } catch (fetchError) {

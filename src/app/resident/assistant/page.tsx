@@ -27,6 +27,7 @@ export default function AssistantPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const assistantText = useRef("");
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,7 +57,7 @@ export default function AssistantPage() {
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
-      let assistantText = "";
+      assistantText.current = "";
 
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
@@ -64,12 +65,12 @@ export default function AssistantPage() {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          assistantText += decoder.decode(value, { stream: true });
+          assistantText.current += decoder.decode(value, { stream: true });
           setMessages((prev) => {
             const updated = [...prev];
             updated[updated.length - 1] = {
               role: "assistant",
-              content: assistantText,
+              content: assistantText.current,
             };
             return updated;
           });

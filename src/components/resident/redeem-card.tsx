@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 const REDEEM_THRESHOLD = 150;
+type AvailableReward = { id: string; name: string; pointsCost: number; stock: number };
 
 export function RedeemCard({ balance }: { balance: number }) {
   const router = useRouter();
@@ -24,10 +25,12 @@ export function RedeemCard({ balance }: { balance: number }) {
     try {
       // Get available rewards that cost 150 points or less
       const res = await fetch("/api/rewards");
-      const rewards = await res.json();
+      const rewards = (await res.json()) as AvailableReward[];
 
       // Find a reward that costs exactly 150 points or the closest available
-      const eligibleReward = rewards.find((r: any) => r.pointsCost <= currentBalance && r.stock > 0);
+      const eligibleReward = rewards.find(
+        (reward) => reward.pointsCost <= currentBalance && reward.stock > 0
+      );
 
       if (!eligibleReward) {
         toast.error("No rewards available for redemption at this time");
