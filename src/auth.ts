@@ -18,6 +18,21 @@ class DatabaseUnavailableError extends CredentialsSignin {
   code = "database_unavailable";
 }
 
+function isDatabaseUnavailable(error: unknown) {
+  if (!(error instanceof Error)) return false;
+
+  const message = error.message.toLowerCase();
+  return [
+    "database_url is not configured",
+    "econnrefused",
+    "p1001",
+    "p1002",
+    "can't reach database",
+    "connection terminated",
+    "connection timeout",
+  ].some((fragment) => message.includes(fragment));
+}
+
 function isSmtpConfigured() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER);
 }
@@ -95,11 +110,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         } catch (error) {
           if (error instanceof EmailNotVerifiedError) throw error;
           
-          if (
-            error instanceof Error &&
-            (error.message.includes("ECONNREFUSED") ||
-              error.message.includes("DATABASE_URL is not configured"))
-          ) {
+          if (isDatabaseUnavailable(error)) {
             console.error("[auth:credentials] Database connection failed:", error);
             throw new DatabaseUnavailableError();
           }
