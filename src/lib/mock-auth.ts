@@ -110,10 +110,12 @@ export function mockRegisterUser(input: {
  * Check if mock authentication should be used
  */
 export function shouldUseMockAuth(): boolean {
-  return (
-    process.env.MOCK_AUTH === "true" &&
-    (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("localhost"))
-  );
+  if (process.env.MOCK_AUTH === "true") return true;
+  if (process.env.NODE_ENV === "production") return false;
+
+  // In local/dev environments, seeded demo users should still be usable even if
+  // the database is not running, unreachable, or temporarily unavailable.
+  return true;
 }
 
 /**

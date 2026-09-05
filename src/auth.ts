@@ -81,6 +81,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
 
           if (!user?.passwordHash || user.deletedAt || !user.isActive) {
+            if (process.env.NODE_ENV !== "production" && shouldUseMockAuth()) {
+              const mockResult = await mockAuthenticate(
+                parsed.data.email,
+                parsed.data.password
+              );
+              if (mockResult.success && "user" in mockResult) {
+                return {
+                  ...mockResult.user,
+                  role: mockResult.user.role as UserRole,
+                };
+              }
+            }
             return null;
           }
 
@@ -88,7 +100,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             parsed.data.password,
             user.passwordHash
           );
-          if (!valid) return null;
+          if (!valid) {
+            if (process.env.NODE_ENV !== "production" && shouldUseMockAuth()) {
+              const mockResult = await mockAuthenticate(
+                parsed.data.email,
+                parsed.data.password
+              );
+              if (mockResult.success && "user" in mockResult) {
+                return {
+                  ...mockResult.user,
+                  role: mockResult.user.role as UserRole,
+                };
+              }
+            }
+            return null;
+          }
 
           if (!user.emailVerified) {
             if (!isSmtpConfigured()) {
