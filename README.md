@@ -26,11 +26,14 @@ npm install
 
 ### 2. Configure environment
 
-Copy the example env file and edit values:
+Copy the example file to a local-only environment file and replace the placeholders:
 
-```bash
-cp .env.example .env
+```powershell
+Copy-Item .env.example .env.local
 ```
+
+Next.js loads `.env.local` for local development. Keep secrets in your local file or
+your deployment provider's environment settings; never commit them to the repository.
 
 Required variables:
 
@@ -38,6 +41,8 @@ Required variables:
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `AUTH_SECRET` | Random secret — run `openssl rand -base64 32` |
+
+`DIRECT_URL` is only needed when `DATABASE_URL` uses a `prisma+postgres://` URL.
 
 Optional (features work with fallbacks without these):
 
