@@ -27,6 +27,31 @@ export interface AuthError {
  * Handle authentication errors and convert them to user-friendly messages
  */
 export function handleAuthError(error: any): AuthError {
+  const errorCode =
+    typeof error === "string"
+      ? error
+      : typeof error?.error === "string"
+        ? error.error
+        : error?.code;
+
+  if (errorCode === "CredentialsSignin") {
+    return {
+      type: "CredentialsSignin",
+      message: "Invalid credentials",
+      userFriendlyMessage: "Invalid email or password. Please check your credentials and try again.",
+      originalError: error,
+    };
+  }
+
+  if (errorCode === "email_not_verified") {
+    return {
+      type: "EmailNotVerified",
+      message: "Email not verified",
+      userFriendlyMessage: "Please verify your email address before signing in. Check your inbox for the verification link.",
+      originalError: error,
+    };
+  }
+
   // Handle specific NextAuth error codes
   if (error?.type) {
     switch (error.type) {

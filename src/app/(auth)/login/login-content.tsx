@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
-import { handleAuthError, showAuthErrorToast } from "@/lib/auth-error-handler";
+import { showAuthErrorToast } from "@/lib/auth-error-handler";
 
 export default function LoginPage() {
   const router = useRouter();
