@@ -1,7 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { PrismaClient } from "@/generated/prisma/client";
-import { resolvePgConnectionString } from "@/lib/database-url";
+import { pgPoolSsl, resolvePgConnectionString } from "@/lib/database-url";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -13,11 +13,7 @@ function createPrismaClient(connectionString: string) {
     globalForPrisma.pgPool ??
     new Pool({
       connectionString,
-      ssl:
-        process.env.NODE_ENV === "production" &&
-        !connectionString.includes(".render.internal")
-          ? { rejectUnauthorized: false }
-          : undefined,
+      ssl: pgPoolSsl(connectionString),
     });
 
   if (process.env.NODE_ENV !== "production") {

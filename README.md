@@ -171,6 +171,29 @@ npm run start
 
 Ensure `DATABASE_URL`, `AUTH_SECRET`, and `NEXTAUTH_URL` are set in your deployment environment.
 
+`npm run start` automatically runs `npm run db:setup` first (creates tables + demo users).
+
+## Fix database after replacing Render Postgres
+
+If you deleted your old Render database and created a new one:
+
+1. **Web Service → Environment** → set `DATABASE_URL` to the new **Internal Database URL**
+   - Use **Internal**, not External, on the web service
+   - Or click **Add from Render Postgres** and select the new database
+2. **Redeploy** the web service (Manual Deploy → Deploy latest commit)
+3. Open `https://YOUR-SERVICE.onrender.com/api/health`
+   - Should return `"status": "ok"` and `"users": 3` (or more)
+4. Log in at `/login` with:
+   - Admin: `admin@example.com` / `Admin123!`
+
+Local repair:
+
+```bash
+# Set DATABASE_URL in .env.local first, then:
+npm run db:setup
+npm run db:check
+```
+
 ## Deploy to Render (PostgreSQL)
 
 ### 1. Push code to GitHub
@@ -192,7 +215,7 @@ Render deploys from Git. Initialize and push this project to a GitHub repository
 3. **Root Directory:** leave blank (repository root), or set it to `.`. Do not set it to `src`.
 4. **Build Command:** `npm install && npm run build:render`
 5. **Start Command:** `npm run start`
-6. **Pre-Deploy Command (optional):** `npx prisma db seed`
+5. **Pre-Deploy Command:** `npm run db:setup`
 
 Or use the included `render.yaml` blueprint: **New** → **Blueprint** → select repo.
 

@@ -95,7 +95,7 @@ export async function ensureDemoUsers() {
       }
     } catch (error) {
       console.error("[bootstrap-users] Bootstrap failed:", error);
-      // Don't throw - allow the app to start even if bootstrap fails
+      bootstrapPromise = null;
     }
   })();
 

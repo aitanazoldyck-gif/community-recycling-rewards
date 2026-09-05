@@ -30,3 +30,24 @@ export function resolvePgConnectionString(
   // when DATABASE_URL is absent or cannot be converted for node-postgres.
   return process.env.DIRECT_URL;
 }
+
+/** Render and other hosted Postgres URLs usually require SSL. */
+export function pgPoolSsl(connectionString: string) {
+  const isLocal =
+    connectionString.includes("localhost") ||
+    connectionString.includes("127.0.0.1");
+
+  const isRenderInternal =
+    connectionString.includes(".render.internal") ||
+    /@dpg-[a-z0-9-]+-a[/.]/.test(connectionString);
+
+  const requiresSsl =
+    !isLocal &&
+    !isRenderInternal &&
+    (connectionString.includes(".render.com") ||
+      connectionString.includes("sslmode=require") ||
+      connectionString.includes("ssl=true") ||
+      process.env.NODE_ENV === "production");
+
+  return requiresSsl ? { rejectUnauthorized: false } : undefined;
+}

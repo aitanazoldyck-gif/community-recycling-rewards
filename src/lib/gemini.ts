@@ -6,8 +6,16 @@ export const GEMINI_CHAT_MODEL =
 export const GEMINI_VISION_MODEL =
   process.env.GEMINI_VISION_MODEL ?? "gemini-2.5-flash";
 
+function readFirstEnv(...keys: string[]) {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (value) return value;
+  }
+  return undefined;
+}
+
 export function getGeminiApiKey() {
-  return process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
+  return readFirstEnv("GEMINI_API_KEY", "GOOGLE_API_KEY", "Gemini_api_key");
 }
 
 export function isGeminiConfigured() {

@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "build:render": "npm run build",
-    "start": "next start",
+    "build:render": "prisma generate && next build",
+    "start": "node scripts/setup-db.mjs && next start",
+    "db:setup": "node scripts/setup-db.mjs",
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:check": "node scripts/check-db.mjs",

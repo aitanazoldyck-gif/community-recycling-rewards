@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { isGeminiConfigured } from "@/lib/gemini";
 
 export default async function AdminSettingsPage() {
   const settings = await db.systemSetting.findMany({
@@ -43,7 +44,7 @@ export default async function AdminSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           {[
-            { label: "Gemini AI", configured: !!(process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY) },
+            { label: "Gemini AI", configured: isGeminiConfigured() },
             { label: "Google OAuth", configured: !!process.env.GOOGLE_CLIENT_ID },
             { label: "SMTP Email", configured: !!process.env.SMTP_HOST },
             { label: "Cloudinary", configured: !!process.env.CLOUDINARY_CLOUD_NAME },
