@@ -5,17 +5,11 @@
 export function resolvePgConnectionString(
   url = process.env.DATABASE_URL
 ): string | undefined {
-  if (process.env.DIRECT_URL) {
-    return process.env.DIRECT_URL;
-  }
-
-  if (!url) return undefined;
-
-  if (url.startsWith("postgres://") || url.startsWith("postgresql://")) {
+  if (url?.startsWith("postgres://") || url?.startsWith("postgresql://")) {
     return url;
   }
 
-  if (url.startsWith("prisma+postgres://")) {
+  if (url?.startsWith("prisma+postgres://")) {
     try {
       const apiKey = new URL(url).searchParams.get("api_key");
       if (apiKey) {
@@ -32,5 +26,7 @@ export function resolvePgConnectionString(
     }
   }
 
-  return undefined;
+  // DIRECT_URL is primarily for Prisma migrations. Use it at runtime only
+  // when DATABASE_URL is absent or cannot be converted for node-postgres.
+  return process.env.DIRECT_URL;
 }

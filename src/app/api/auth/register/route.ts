@@ -123,13 +123,19 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("[register]", error);
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Registration failed. Please try again.";
+    const message = error instanceof Error ? error.message : "";
+    const isDatabaseError =
+      message.includes("Can't reach database server") ||
+      message.includes("DATABASE_URL is not configured") ||
+      message.includes("ECONNREFUSED") ||
+      message.includes("P1001");
 
     return NextResponse.json(
-      { error: message },
+      {
+        error: isDatabaseError
+          ? "Registration is temporarily unavailable because the database cannot be reached. Please try again later."
+          : "Registration failed. Please try again.",
+      },
       { status: 500 }
     );
   }
