@@ -44,6 +44,17 @@ Required variables:
 
 `DIRECT_URL` is only needed when `DATABASE_URL` uses a `prisma+postgres://` URL.
 
+Before registering an account, make sure PostgreSQL is running and the database
+in `DATABASE_URL` exists. Check the connection with:
+
+```powershell
+npm run db:push
+```
+
+If this reports `P1001: Can't reach database server`, update `.env.local` with a
+reachable PostgreSQL URL or use the `DATABASE_URL` supplied by your hosting
+provider. The application cannot create accounts until the database is reachable.
+
 Optional (features work with fallbacks without these):
 
 | Variable | Feature |

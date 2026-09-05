@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { Html5Qrcode } from "html5-qrcode";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -197,8 +198,8 @@ export default function ScanPage() {
           </div>
 
           {previewUrl && (
-            <div className="rounded-lg border bg-muted/40 p-2">
-              <img src={previewUrl} alt="Uploaded QR code preview" className="w-full rounded-md object-contain" />
+            <div className="relative aspect-video rounded-lg border bg-muted/40 p-2">
+              <Image src={previewUrl} alt="Uploaded QR code preview" fill className="rounded-md object-contain" sizes="(max-width: 768px) 100vw, 768px" />
             </div>
           )}
 

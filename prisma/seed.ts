@@ -76,7 +76,7 @@ async function main() {
 
   // Staff user
   const staffHash = await bcrypt.hash("Staff123!", 12);
-  const staff = await db.user.upsert({
+  await db.user.upsert({
     where: { email: "staff@example.com" },
     update: {
       passwordHash: staffHash,

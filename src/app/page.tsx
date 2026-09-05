@@ -4,8 +4,6 @@ import {
   Recycle,
   ArrowRight,
   Leaf,
-  Award,
-  MapPin,
   Sparkles,
   Users,
   TrendingUp,
@@ -13,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
+import { APP_NAME } from "@/lib/constants";
 import { LandingStats } from "@/components/landing/landing-stats";
 import { LandingHero } from "@/components/landing/landing-hero";
 import { LandingFeatures } from "@/components/landing/landing-features";
