@@ -3,9 +3,8 @@ import pg from "pg";
 import bcrypt from "bcryptjs";
 
 function resolvePgConnectionString(url = process.env.DATABASE_URL) {
-  if (process.env.DIRECT_URL) return process.env.DIRECT_URL;
-  if (!url) return undefined;
-  if (url.startsWith("postgres://") || url.startsWith("postgresql://")) return url;
+  if (url?.startsWith("postgres://") || url?.startsWith("postgresql://")) return url;
+  if (!url) return process.env.DIRECT_URL;
   if (url.startsWith("prisma+postgres://")) {
     try {
       const apiKey = new URL(url).searchParams.get("api_key");
@@ -20,7 +19,7 @@ function resolvePgConnectionString(url = process.env.DATABASE_URL) {
       /* fall through */
     }
   }
-  return undefined;
+  return process.env.DIRECT_URL;
 }
 
 const cs = resolvePgConnectionString();

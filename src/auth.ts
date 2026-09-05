@@ -9,6 +9,7 @@ import type { UserRole } from "@/generated/prisma/enums";
 import { loginSchema } from "@/lib/validators/auth";
 import { authConfig } from "@/auth.config";
 import { ensureDemoUsers } from "@/lib/bootstrap-users";
+import { mockAuthenticate, shouldUseMockAuth } from "@/lib/mock-auth";
 
 class EmailNotVerifiedError extends CredentialsSignin {
   code = "email_not_verified";
@@ -112,6 +113,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           
           if (isDatabaseUnavailable(error)) {
             console.error("[auth:credentials] Database connection failed:", error);
+
+            if (process.env.NODE_ENV !== "production" && shouldUseMockAuth()) {
+              const mockResult = await mockAuthenticate(
+                parsed.data.email,
+                parsed.data.password
+              );
+
+              if (mockResult.success && "user" in mockResult) {
+                return {
+                  ...mockResult.user,
+                  role: mockResult.user.role as UserRole,
+                };
+              }
+
+              return null;
+            }
+
             throw new DatabaseUnavailableError();
           }
           

@@ -43,20 +43,20 @@ export async function mockAuthenticate(email: string, password: string) {
 
   if (!user) {
     return {
-      success: false,
+      success: false as const,
       error: "Invalid email or password",
     };
   }
 
   if (!user.isActive) {
     return {
-      success: false,
+      success: false as const,
       error: "Account is inactive",
     };
   }
 
   return {
-    success: true,
+    success: true as const,
     user: {
       id: user.id,
       email: user.email,
@@ -71,7 +71,10 @@ export async function mockAuthenticate(email: string, password: string) {
  * Check if mock authentication should be used
  */
 export function shouldUseMockAuth(): boolean {
-  return !process.env.DATABASE_URL || process.env.DATABASE_URL.includes("localhost");
+  return (
+    process.env.MOCK_AUTH === "true" &&
+    (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes("localhost"))
+  );
 }
 
 /**
