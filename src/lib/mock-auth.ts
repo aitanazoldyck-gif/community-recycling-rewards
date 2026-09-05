@@ -3,7 +3,17 @@
  * This provides a fallback authentication system when database is not available
  */
 
-const MOCK_USERS = [
+type MockUser = {
+  id: string;
+  email: string;
+  password: string;
+  name: string;
+  role: "ADMIN" | "COLLECTION_STAFF" | "RESIDENT";
+  emailVerified: Date;
+  isActive: boolean;
+};
+
+const MOCK_USERS: MockUser[] = [
   {
     id: "admin-001",
     email: "admin@example.com",
@@ -65,6 +75,35 @@ export async function mockAuthenticate(email: string, password: string) {
       emailVerified: user.emailVerified,
     },
   };
+}
+
+export function mockRegisterUser(input: {
+  name: string;
+  email: string;
+  password: string;
+}) {
+  const email = input.email.trim().toLowerCase();
+  const existing = MOCK_USERS.find((user) => user.email === email);
+
+  if (existing) {
+    return {
+      success: false as const,
+      error: "An account with this email already exists",
+    };
+  }
+
+  const user: MockUser = {
+    id: `mock-${Date.now()}`,
+    email,
+    password: input.password,
+    name: input.name.trim(),
+    role: "RESIDENT",
+    emailVerified: new Date(),
+    isActive: true,
+  };
+
+  MOCK_USERS.push(user);
+  return { success: true as const, user };
 }
 
 /**

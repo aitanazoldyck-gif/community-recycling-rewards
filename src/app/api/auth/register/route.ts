@@ -9,6 +9,7 @@ import {
 } from "@/lib/email";
 import { APP_NAME } from "@/lib/constants";
 import { getAppUrl } from "@/lib/env";
+import { mockRegisterUser, shouldUseMockAuth } from "@/lib/mock-auth";
 
 function isSmtpConfigured() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER);
@@ -30,6 +31,26 @@ export async function POST(request: Request) {
     const normalizedEmail = email.toLowerCase();
     const normalizedPhone = phone?.trim() || undefined;
     const smtpConfigured = isSmtpConfigured();
+
+    if (process.env.NODE_ENV !== "production" && shouldUseMockAuth()) {
+      const mockResult = mockRegisterUser({ name, email: normalizedEmail, password });
+
+      if (!mockResult.success) {
+        return NextResponse.json(
+          { error: { email: [mockResult.error] } },
+          { status: 409 }
+        );
+      }
+
+      return NextResponse.json(
+        {
+          message: "Account created. You can sign in now.",
+          userId: mockResult.user.id,
+          autoVerified: true,
+        },
+        { status: 201 }
+      );
+    }
 
     const existing = await db.user.findUnique({
       where: { email: normalizedEmail },
