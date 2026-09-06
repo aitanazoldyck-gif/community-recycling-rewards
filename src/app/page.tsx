@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import {
   Recycle,
   ArrowRight,
+  Download,
   Leaf,
   Sparkles,
   Users,
@@ -36,6 +37,21 @@ export default function HomePage() {
             <a href="#impact" className="hover:text-foreground transition-colors">Impact</a>
           </nav>
           <div className="flex items-center gap-3">
+            <a
+              href="https://drive.google.com/file/d/1ySO6l4DZZVOFRdtMEEbrrdG6rNwkhaO-/view?usp=drive_link"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Install the EcoRewards application"
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="group inline-flex border-primary/30 bg-primary/5 text-primary shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/10 hover:shadow-md"
+              >
+                <Download className="h-4 w-4 transition-transform group-hover:translate-y-0.5" />
+                <span className="hidden sm:inline">Install app</span>
+              </Button>
+            </a>
             <Link href="/login">
               <Button variant="ghost" size="sm">Sign in</Button>
             </Link>
