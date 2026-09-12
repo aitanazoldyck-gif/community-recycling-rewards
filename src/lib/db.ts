@@ -1,26 +1,13 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@/generated/prisma/client";
-import { pgPoolSsl, resolvePgConnectionString } from "@/lib/database-url";
+import { resolveMySqlConnectionString } from "@/lib/database-url";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
-  pgPool: Pool | undefined;
 };
 
 function createPrismaClient(connectionString: string) {
-  const pool =
-    globalForPrisma.pgPool ??
-    new Pool({
-      connectionString,
-      ssl: pgPoolSsl(connectionString),
-    });
-
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.pgPool = pool;
-  }
-
-  const adapter = new PrismaPg(pool);
+  const adapter = new PrismaMariaDb(connectionString);
 
   return new PrismaClient({
     adapter,
@@ -32,7 +19,7 @@ function createPrismaClient(connectionString: string) {
 }
 
 function getPrismaClient() {
-  const connectionString = resolvePgConnectionString();
+  const connectionString = resolveMySqlConnectionString();
   if (!connectionString) {
     throw new Error("DATABASE_URL is not configured");
   }

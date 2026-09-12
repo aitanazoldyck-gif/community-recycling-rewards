@@ -8,13 +8,13 @@ A full-stack web application for community recycling programs. Residents earn po
 
 - **Frontend:** Next.js 16, React 19, Tailwind CSS 4
 - **Backend:** Next.js API Routes, NextAuth v5
-- **Database:** PostgreSQL + Prisma 7
+- **Database:** MySQL + Prisma 7
 - **AI:** Google Gemini (optional — chat assistant & waste classification)
 
 ## Prerequisites
 
 - Node.js 20+
-- PostgreSQL 14+ (local or cloud)
+- MySQL 8+ or MariaDB 10.6+ (local or cloud)
 
 ## Quick Start
 
@@ -39,12 +39,12 @@ Required variables:
 
 | Variable | Description |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
+| `DATABASE_URL` | MySQL connection string |
 | `AUTH_SECRET` | Random secret — run `openssl rand -base64 32` |
 
-`DIRECT_URL` is only needed when `DATABASE_URL` uses a `prisma+postgres://` URL.
+`DIRECT_URL` is an optional second MySQL connection string for database commands.
 
-Before registering an account, make sure PostgreSQL is running and the database
+Before registering an account, make sure MySQL is running and the database
 in `DATABASE_URL` exists. Check the connection with:
 
 ```powershell
@@ -53,17 +53,17 @@ npm run db:push
 ```
 
 If this reports `P1001: Can't reach database server`, update `.env.local` with a
-reachable PostgreSQL URL or use the `DATABASE_URL` supplied by your hosting
+reachable MySQL URL or use the `DATABASE_URL` supplied by your hosting
 provider. The application cannot create accounts until the database is reachable.
 
-For a local PostgreSQL installation, use a URL like:
+For a local MySQL installation, use a URL like:
 
 ```env
-DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/community_recycling_rewards?schema=public"
+DATABASE_URL="mysql://root:YOUR_PASSWORD@localhost:3306/community_recycling_rewards"
 ```
 
 Create the database if needed, then run `npm run db:push` and `npm run db:seed`.
-Alternatively, create a hosted PostgreSQL database and paste its connection URL
+Alternatively, create a hosted MySQL database and paste its connection URL
 into `.env.local`. Do not use the placeholder `user:password` URL.
 
 Optional (features work with fallbacks without these):
@@ -173,13 +173,11 @@ Ensure `DATABASE_URL`, `AUTH_SECRET`, and `NEXTAUTH_URL` are set in your deploym
 
 `npm run start` automatically runs `npm run db:setup` first (creates tables + demo users).
 
-## Fix database after replacing Render Postgres
+## Fix database after replacing a hosted MySQL database
 
 If you deleted your old Render database and created a new one:
 
-1. **Web Service → Environment** → set `DATABASE_URL` to the new **Internal Database URL**
-   - Use **Internal**, not External, on the web service
-   - Or click **Add from Render Postgres** and select the new database
+1. Set `DATABASE_URL` to the new MySQL connection URL in your hosting dashboard.
 2. **Redeploy** the web service (Manual Deploy → Deploy latest commit)
 3. Open `https://YOUR-SERVICE.onrender.com/api/health`
    - Should return `"status": "ok"` and `"users": 3` (or more)
@@ -271,6 +269,24 @@ Get a Gemini API key at [Google AI Studio](https://aistudio.google.com/apikey).
 2. Google Cloud Console → **APIs & Services** → **Credentials** → **OAuth client ID** (Web)
 3. Authorized redirect URI: `https://YOUR-SERVICE.onrender.com/api/auth/callback/google`
 4. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in Render Environment
+
+## Deploy to Railway (MySQL)
+
+1. Create a MySQL service in the same Railway project as the app, using a Railway
+   MySQL plugin or a hosted MySQL provider.
+2. Open the app service → **Variables** → **Add Reference** and select the
+   MySQL service's `DATABASE_URL`.
+3. Remove any old `DATABASE_URL` or `DIRECT_URL` values copied from Render. A
+   host beginning with `dpg-` or ending in `render.com` is a Render database
+   and is not reachable through Railway's private network.
+4. Add `AUTH_SECRET` and set `AUTH_TRUST_HOST=true`.
+5. Deploy the app with build command `npm run build` and start command
+   `npm run start`.
+
+The start command applies the Prisma schema and seeds the database before
+   starting Next.js. Railway must therefore provide a reachable MySQL
+   `DATABASE_URL` before the service starts. Do not paste the Render PostgreSQL
+   connection string into Railway.
 
 ## License
 
