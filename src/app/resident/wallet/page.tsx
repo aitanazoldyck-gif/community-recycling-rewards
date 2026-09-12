@@ -63,7 +63,14 @@ export default async function WalletPage() {
         </Card>
       </div>
 
-      <RedeemCard balance={balance} />
+      <section id="gcash-redeem" aria-labelledby="gcash-redeem-title" className="scroll-mt-6 space-y-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#007dfe]">Cash out your points</p>
+          <h2 id="gcash-redeem-title" className="mt-1 text-xl font-bold">Redeem through GCash</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Enter your GCash details and upload your QR code to request a secure payout.</p>
+        </div>
+        <RedeemCard balance={balance} />
+      </section>
 
       <Card>
         <CardHeader>
