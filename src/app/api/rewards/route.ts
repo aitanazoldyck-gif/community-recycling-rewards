@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole, requireSession } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { uploadImage } from "@/lib/cloudinary";
 
 async function ensureWallet(userId: string) {
   const existing = await db.rewardWallet.findUnique({ where: { residentId: userId } });
@@ -25,6 +26,8 @@ export async function GET() {
 const redeemSchema = z.object({
   rewardId: z.string().min(1).optional(),
   points: z.number().int().positive().optional(),
+  gcashNumber: z.string().trim().optional(),
+  gcashQr: z.string().optional(),
 }).refine((data) => data.rewardId || data.points, {
   message: "A reward or points amount is required",
 });
@@ -40,33 +43,65 @@ export async function POST(request: Request) {
   if ("error" in authResult) return authResult.error;
 
   try {
-    const { rewardId, points } = redeemSchema.parse(await request.json());
+    const { rewardId, points, gcashNumber, gcashQr } = redeemSchema.parse(await request.json());
     const userId = authResult.session.user.id;
+    const isGcashRedemption = Boolean(gcashNumber || gcashQr);
+
+    if (isGcashRedemption) {
+      const normalizedNumber = gcashNumber?.replace(/\s|-/g, "");
+      if (!normalizedNumber || !/^09\d{9}$/.test(normalizedNumber)) {
+        return NextResponse.json({ error: "Enter a valid 11-digit GCash number starting with 09." }, { status: 400 });
+      }
+      if (!gcashQr?.startsWith("data:image/")) {
+        return NextResponse.json({ error: "Upload a valid GCash QR code image." }, { status: 400 });
+      }
+      if (gcashQr.length > 8_000_000) {
+        return NextResponse.json({ error: "The QR image must be smaller than 6 MB." }, { status: 400 });
+      }
+    }
 
     const [requestedReward, wallet] = await Promise.all([
       rewardId
         ? db.reward.findFirst({ where: { id: rewardId, isActive: true, deletedAt: null } })
-        : db.reward.findFirst({
-            where: {
-              isActive: true,
-              deletedAt: null,
-              stock: { gt: 0 },
-              pointsCost: { lte: points },
-            },
-            orderBy: { pointsCost: "desc" },
-          }),
+        : isGcashRedemption
+          ? db.reward.findFirst({
+              where: { name: "GCash Redeem", isActive: true, deletedAt: null },
+            })
+          : db.reward.findFirst({
+              where: {
+                isActive: true,
+                deletedAt: null,
+                stock: { gt: 0 },
+                pointsCost: { lte: points },
+              },
+              orderBy: { pointsCost: "desc" },
+            }),
       ensureWallet(userId),
     ]);
 
-    if (!requestedReward) {
+    const reward = requestedReward ?? (isGcashRedemption
+      ? await db.reward.create({
+          data: {
+            name: "GCash Redeem",
+            description: "Convert your recycling points into GCash.",
+            type: "CASH",
+            pointsCost: points ?? 150,
+            cashValue: 0,
+            stock: 999999,
+            isActive: true,
+          },
+        })
+      : null);
+
+    if (!reward) {
       return NextResponse.json({ error: "Reward not found" }, { status: 404 });
     }
 
-    if (requestedReward.stock <= 0) {
+    if (reward.stock <= 0) {
       return NextResponse.json({ error: "Reward out of stock" }, { status: 400 });
     }
 
-    const redemptionPoints = points ?? requestedReward.pointsCost;
+    const redemptionPoints = points ?? reward.pointsCost;
     if (wallet.balance < redemptionPoints) {
       return NextResponse.json(
         {
@@ -76,13 +111,20 @@ export async function POST(request: Request) {
       );
     }
 
+    const uploadedQr = isGcashRedemption
+      ? await uploadImage(gcashQr!, "gcash-qr")
+      : null;
+
     const redemption = await db.$transaction(async (tx) => {
       const req = await tx.redemptionRequest.create({
         data: {
           userId,
-          rewardId: requestedReward.id,
+          rewardId: reward.id,
           points: redemptionPoints,
           status: "PENDING",
+          paymentMethod: isGcashRedemption ? "GCASH" : null,
+          gcashNumber: isGcashRedemption ? gcashNumber!.replace(/\s|-/g, "") : null,
+          gcashQrUrl: uploadedQr?.url ?? null,
         },
         include: { reward: true },
       });
@@ -91,7 +133,9 @@ export async function POST(request: Request) {
         data: {
           userId,
           title: "Redemption submitted",
-          message: `Your request to redeem ${redemptionPoints} points is pending approval.`,
+          message: isGcashRedemption
+            ? `Your GCash redemption of ${redemptionPoints} points is pending approval.`
+            : `Your request to redeem ${redemptionPoints} points is pending approval.`,
           type: "reward",
           link: "/resident/rewards",
         },

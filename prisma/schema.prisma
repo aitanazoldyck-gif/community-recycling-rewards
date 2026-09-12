@@ -360,12 +360,15 @@ model Reward {
 }
 
 model RedemptionRequest {
-  id        String           @id @default(cuid())
-  userId    String
-  rewardId  String
-  points    Int
-  status    RedemptionStatus @default(PENDING)
-  notes     String?
+  id            String           @id @default(cuid())
+  userId        String
+  rewardId      String
+  points        Int
+  status        RedemptionStatus @default(PENDING)
+  paymentMethod String?
+  gcashNumber   String?
+  gcashQrUrl    String?          @db.Text
+  notes         String?
   fulfilledAt DateTime?
   deletedAt DateTime?
   createdAt DateTime         @default(now())

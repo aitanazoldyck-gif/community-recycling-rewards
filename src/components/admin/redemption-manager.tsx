@@ -12,6 +12,9 @@ type Redemption = {
   points: number;
   status: string;
   createdAt: string;
+  paymentMethod: string | null;
+  gcashNumber: string | null;
+  gcashQrUrl: string | null;
   user: { name: string | null; email: string };
   reward: { name: string };
 };
@@ -71,6 +74,19 @@ export function RedemptionManager({ initial }: { initial: Redemption[] }) {
             <p className="text-xs text-muted-foreground">
               Requested {new Date(r.createdAt).toLocaleString()}
             </p>
+            {r.paymentMethod === "GCASH" && (
+              <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl bg-[#007dfe]/5 p-3 ring-1 ring-[#007dfe]/10">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#007dfe]">GCash payout</p>
+                  <p className="font-medium">{r.gcashNumber}</p>
+                </div>
+                {r.gcashQrUrl && (
+                  <a href={r.gcashQrUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-[#007dfe] hover:underline">
+                    View QR code
+                  </a>
+                )}
+              </div>
+            )}
             {r.status === "PENDING" && (
               <div className="flex flex-wrap gap-2 pt-2">
                 {ACTIONS.map((action) => (

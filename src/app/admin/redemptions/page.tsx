@@ -18,6 +18,9 @@ export default async function AdminRedemptionsPage() {
     points: r.points,
     status: r.status,
     createdAt: r.createdAt.toISOString(),
+    paymentMethod: r.paymentMethod,
+    gcashNumber: r.gcashNumber,
+    gcashQrUrl: r.gcashQrUrl,
     user: r.user,
     reward: r.reward,
   }));
