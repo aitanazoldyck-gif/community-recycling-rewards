@@ -58,7 +58,10 @@ export function RedeemCard({ balance }: { balance: number }) {
 
       const data = await redeemRes.json();
       if (!redeemRes.ok) {
-        throw new Error(data.error ?? "Redemption failed");
+        const message = typeof data.error === "string"
+          ? data.error
+          : "Redemption failed. Please check your details and try again.";
+        throw new Error(message);
       }
 
       setCurrentBalance((prev) => prev - amount);

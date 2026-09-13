@@ -111,9 +111,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const uploadedQr = isGcashRedemption
-      ? await uploadImage(gcashQr!, "gcash-qr")
-      : null;
+    let uploadedQr: { url: string; publicId: string } | null = null;
+    if (isGcashRedemption) {
+      try {
+        uploadedQr = await uploadImage(gcashQr!, "gcash-qr");
+      } catch (error) {
+        console.error("[rewards] GCash QR upload failed", error);
+        return NextResponse.json(
+          {
+            error: "GCash redemption is temporarily unavailable because QR image storage is not configured. Please contact the administrator.",
+          },
+          { status: 503 },
+        );
+      }
+    }
 
     const redemption = await db.$transaction(async (tx) => {
       const req = await tx.redemptionRequest.create({
