@@ -198,7 +198,7 @@ export function DashboardShell({
               variant="ghost"
               size="sm"
               className="w-full mt-2 justify-start text-muted-foreground"
-              onClick={() => signOut({ callbackUrl: "/" })}
+              onClick={() => signOut({ callbackUrl: `${window.location.origin}/` })}
             >
               <LogOut className="h-4 w-4" />
               Sign out
