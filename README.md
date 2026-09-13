@@ -173,120 +173,20 @@ Ensure `DATABASE_URL`, `AUTH_SECRET`, and `NEXTAUTH_URL` are set in your deploym
 
 `npm run start` automatically runs `npm run db:setup` first (creates tables + demo users).
 
-## Fix database after replacing a hosted MySQL database
-
-If you deleted your old Render database and created a new one:
-
-1. Set `DATABASE_URL` to the new MySQL connection URL in your hosting dashboard.
-2. **Redeploy** the web service (Manual Deploy → Deploy latest commit)
-3. Open `https://YOUR-SERVICE.onrender.com/api/health`
-   - Should return `"status": "ok"` and `"users": 3` (or more)
-4. Log in at `/login` with:
-   - Admin: `admin@example.com` / `Admin123!`
-
-Local repair:
-
-```bash
-# Set DATABASE_URL in .env.local first, then:
-npm run db:setup
-npm run db:check
-```
-
-## Deploy to Render (PostgreSQL)
-
-### 1. Push code to GitHub
-
-Render deploys from Git. Initialize and push this project to a GitHub repository.
-
-### 2. Create Render PostgreSQL
-
-1. Go to [render.com](https://render.com) → **New** → **PostgreSQL**
-2. Name: `ecorewards-db`
-3. Database: `ecorewards`
-4. User: `ecorewards`
-5. Create database and copy the **Internal Database URL**
-
-### 3. Create Render Web Service
-
-1. **New** → **Web Service** → connect your GitHub repo
-2. **Runtime:** Node
-3. **Root Directory:** leave blank (repository root), or set it to `.`. Do not set it to `src`.
-4. **Build Command:** `npm install && npm run build:render`
-5. **Start Command:** `npm run start`
-5. **Pre-Deploy Command:** `npm run db:setup`
-
-Or use the included `render.yaml` blueprint: **New** → **Blueprint** → select repo.
-
-### 4. Environment variables (Render Dashboard)
-
-Set these on the **Web Service** → **Environment**:
-
-| Variable | Value | Required |
-|---|---|---|
-| `DATABASE_URL` | **Internal Database URL** from your Render Postgres | Yes |
-| `AUTH_SECRET` | Random string — Render can auto-generate | Yes |
-| `NEXTAUTH_URL` | `https://YOUR-SERVICE-NAME.onrender.com` | Yes |
-| `AUTH_TRUST_HOST` | `true` | Yes |
-| `NODE_ENV` | `production` | Auto |
-
-**Link database (recommended):** In the web service, go to **Environment** → **Add from Render Postgres** → select `ecorewards-db`. This auto-fills `DATABASE_URL`.
-
-Optional:
-
-| Variable | Feature |
-|---|---|
-| `GEMINI_API_KEY` | AI assistant & waste classifier |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google / Gmail sign-in |
-| `SMTP_*` | Email verification & password reset |
-| `CLOUDINARY_*` | Image uploads |
-
-### 5. Deploy
-
-After the first successful deploy, open your Render URL and log in with seeded demo accounts:
-
-| Role | Email | Password |
-|---|---|---|
-| Admin | `admin@example.com` | `Admin123!` |
-| Staff | `staff@example.com` | `Staff123!` |
-| Resident | `resident@example.com` | `Resident123!` |
-
-**Google OAuth on Render:** Add authorized redirect URI:
-
-`https://YOUR-SERVICE-NAME.onrender.com/api/auth/callback/google`
-
-**Gemini models (optional overrides):**
-
-| Variable | Default | Use |
-|---|---|---|
-| `GEMINI_CHAT_MODEL` | `gemini-2.5-flash-lite` | AI recycling assistant |
-| `GEMINI_VISION_MODEL` | `gemini-2.5-flash` | Waste image classification |
-
-Get a Gemini API key at [Google AI Studio](https://aistudio.google.com/apikey).
-
-**Google / Gmail sign-in setup:**
-
-1. Firebase Console → Authentication → enable **Google** (same Google Cloud project)
-2. Google Cloud Console → **APIs & Services** → **Credentials** → **OAuth client ID** (Web)
-3. Authorized redirect URI: `https://YOUR-SERVICE.onrender.com/api/auth/callback/google`
-4. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in Render Environment
-
 ## Deploy to Railway (MySQL)
 
 1. Create a MySQL service in the same Railway project as the app, using a Railway
    MySQL plugin or a hosted MySQL provider.
 2. Open the app service → **Variables** → **Add Reference** and select the
    MySQL service's `DATABASE_URL`.
-3. Remove any old `DATABASE_URL` or `DIRECT_URL` values copied from Render. A
-   host beginning with `dpg-` or ending in `render.com` is a Render database
-   and is not reachable through Railway's private network.
+3. Remove any old database URL values from previous hosting providers.
 4. Add `AUTH_SECRET` and set `AUTH_TRUST_HOST=true`.
 5. Deploy the app with build command `npm run build` and start command
    `npm run start`.
 
 The start command applies the Prisma schema and seeds the database before
-   starting Next.js. Railway must therefore provide a reachable MySQL
-   `DATABASE_URL` before the service starts. Do not paste the Render PostgreSQL
-   connection string into Railway.
+starting Next.js. Railway must therefore provide a reachable MySQL
+`DATABASE_URL` before the service starts.
 
 ## License
 

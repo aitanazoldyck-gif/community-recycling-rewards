@@ -15,11 +15,11 @@ function DatabaseErrorPanel({ message }: { message: string }) {
       <CardContent className="space-y-4 text-sm">
         <p className="text-muted-foreground">{message}</p>
         <div className="rounded-xl border border-border/50 bg-background p-4 space-y-2">
-          <p className="font-medium">After creating a new Render database:</p>
+          <p className="font-medium">After configuring the Railway MySQL database:</p>
           <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-            <li>Open your Render web service → Environment</li>
-            <li>Set <code className="text-foreground">DATABASE_URL</code> to the new Internal Database URL</li>
-            <li>Redeploy the web service (this runs schema + seed automatically)</li>
+            <li>Open your Railway app service → Variables</li>
+            <li>Set <code className="text-foreground">DATABASE_URL</code> to the Railway MySQL URL</li>
+            <li>Redeploy the service (this runs schema + seed automatically)</li>
             <li>Visit <code className="text-foreground">/api/health</code> to confirm users exist</li>
           </ol>
         </div>
@@ -90,7 +90,7 @@ export default async function AdminUsersPage() {
             <CardContent className="py-10 text-center space-y-3">
               <p className="text-muted-foreground">No users found in the database yet.</p>
               <p className="text-sm text-muted-foreground">
-                Redeploy on Render or run <code className="text-foreground">npm run db:setup</code> to create demo accounts.
+                Redeploy on Railway or run <code className="text-foreground">npm run db:setup</code> to create demo accounts.
               </p>
               <Button asChild variant="outline" size="sm">
                 <Link href="/api/health">Check database health</Link>
