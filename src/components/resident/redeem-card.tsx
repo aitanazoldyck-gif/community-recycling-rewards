@@ -86,7 +86,7 @@ export function RedeemCard({ balance }: { balance: number }) {
       <CardHeader>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#007dfe] text-xl font-black text-white shadow-md shadow-[#007dfe]/25">G</div>
+            <img src="/gcash-logo.svg" alt="GCash" className="h-12 w-12 shrink-0 rounded-2xl object-cover shadow-md shadow-[#007dfe]/25" />
             <div>
               <CardTitle className="text-xl">GCash Redeem</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">Fast, secure payout to your GCash wallet</p>

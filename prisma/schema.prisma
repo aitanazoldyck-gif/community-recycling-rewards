@@ -367,7 +367,7 @@ model RedemptionRequest {
   status        RedemptionStatus @default(PENDING)
   paymentMethod String?
   gcashNumber   String?
-  gcashQrUrl    String?          @db.Text
+  gcashQrUrl    String?          @db.LongText
   notes         String?
   fulfilledAt DateTime?
   deletedAt DateTime?

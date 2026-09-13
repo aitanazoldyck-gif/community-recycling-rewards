@@ -18,10 +18,9 @@ export async function uploadImage(
     !process.env.CLOUDINARY_API_KEY ||
     !process.env.CLOUDINARY_API_SECRET
   ) {
-    if (process.env.NODE_ENV === "development") {
-      return { url: file, publicId: "dev-local" };
-    }
-    throw new Error("Cloudinary is not configured");
+    // QR submissions can be stored in the database when Cloudinary is not configured.
+    // Cloudinary remains the preferred option for larger/general image uploads.
+    return { url: file, publicId: "database-fallback" };
   }
 
   const result = await cloudinary.uploader.upload(file, {
@@ -33,6 +32,6 @@ export async function uploadImage(
 }
 
 export async function deleteImage(publicId: string) {
-  if (publicId === "dev-local") return;
+  if (publicId === "dev-local" || publicId === "database-fallback") return;
   await cloudinary.uploader.destroy(publicId);
 }

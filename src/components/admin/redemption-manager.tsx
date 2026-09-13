@@ -81,7 +81,8 @@ export function RedemptionManager({ initial }: { initial: Redemption[] }) {
                   <p className="font-medium">{r.gcashNumber}</p>
                 </div>
                 {r.gcashQrUrl && (
-                  <a href={r.gcashQrUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-[#007dfe] hover:underline">
+                  <a href={r.gcashQrUrl} target="_blank" rel="noreferrer" className="group flex items-center gap-2 text-sm font-semibold text-[#007dfe] hover:underline">
+                    <img src={r.gcashQrUrl} alt="Resident GCash QR code" className="h-14 w-14 rounded-lg object-cover ring-1 ring-[#007dfe]/20 transition group-hover:ring-2" />
                     View QR code
                   </a>
                 )}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">GCash</title>
+  <desc id="desc">GCash blue logo mark</desc>
+  <rect width="128" height="128" rx="28" fill="#007dfe"/>
+  <path fill="#fff" d="M65.3 28.2c-21.1 0-36.4 14.8-36.4 35.8 0 20.7 15.1 35.8 36.4 35.8 14.5 0 25.9-6.7 31.6-18.7H81.1c-3.8 4-9.2 6.2-15.8 6.2-12.2 0-20.9-9.4-20.9-23.3 0-14.1 8.7-23.3 20.9-23.3 6.6 0 12 2.2 15.8 6.2h15.8c-5.7-12-17.1-18.7-31.6-18.7Z"/>
+  <path fill="#00b8f2" d="M65.3 52.1h31.8v10.8H65.3z"/>
+</svg>
