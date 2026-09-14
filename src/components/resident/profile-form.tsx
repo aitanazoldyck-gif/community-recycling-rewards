@@ -41,11 +41,12 @@ export function ProfileForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, image: image || undefined }),
       });
-      if (!res.ok) throw new Error("Update failed");
+      const result = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(result?.error ?? "Update failed");
       toast.success("Profile updated!");
       setEditing(false);
-    } catch {
-      toast.error("Failed to update profile");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update profile");
     } finally {
       setLoading(false);
     }

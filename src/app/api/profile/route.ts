@@ -10,7 +10,7 @@ const schema = z.object({
   address: z.string().optional(),
   houseNumber: z.string().optional(),
   barangayId: z.string().optional(),
-  image: z.string().max(8_000_000).optional(),
+  image: z.string().max(12_000_000).optional(),
 });
 
 export async function PATCH(request: Request) {
@@ -60,6 +60,10 @@ export async function PATCH(request: Request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.flatten() }, { status: 400 });
     }
-    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+    console.error("[profile] Update failed", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unable to update profile" },
+      { status: 500 },
+    );
   }
 }
