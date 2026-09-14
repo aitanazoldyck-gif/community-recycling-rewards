@@ -92,7 +92,7 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   passwordHash  String?
-  image         String?
+  image         String?   @db.Text
   role          UserRole  @default(RESIDENT)
   phone         String?
   isActive      Boolean   @default(true)

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireSession } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { uploadImage } from "@/lib/cloudinary";
 
 const schema = z.object({
   name: z.string().min(2).optional(),
@@ -9,6 +10,7 @@ const schema = z.object({
   address: z.string().optional(),
   houseNumber: z.string().optional(),
   barangayId: z.string().optional(),
+  image: z.string().max(8_000_000).optional(),
 });
 
 export async function PATCH(request: Request) {
@@ -19,12 +21,21 @@ export async function PATCH(request: Request) {
     const data = schema.parse(await request.json());
     const userId = authResult.session.user.id;
 
-    if (data.name || data.phone) {
+    let imageUrl: string | undefined;
+    if (data.image) {
+      if (!data.image.startsWith("data:image/")) {
+        return NextResponse.json({ error: "Profile image must be an image upload." }, { status: 400 });
+      }
+      imageUrl = (await uploadImage(data.image, "profiles")).url;
+    }
+
+    if (data.name || data.phone || imageUrl) {
       await db.user.update({
         where: { id: userId },
         data: {
           name: data.name,
           phone: data.phone,
+          ...(imageUrl ? { image: imageUrl } : {}),
         },
       });
     }

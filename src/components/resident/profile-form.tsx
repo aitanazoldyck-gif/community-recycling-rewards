@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signOut } from "next-auth/react";
 import { toast } from "sonner";
 import { ArrowLeft, Check, ChevronRight, Clock3, Globe2, Heart, LockKeyhole, LogOut, MapPin, Pencil, Trash2, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ export function ProfileForm({
 }) {
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [image, setImage] = useState(user.image ?? "");
   const [form, setForm] = useState({
     name: user.name ?? "",
     phone: user.phone ?? "",
@@ -37,7 +39,7 @@ export function ProfileForm({
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, image: image || undefined }),
       });
       if (!res.ok) throw new Error("Update failed");
       toast.success("Profile updated!");
@@ -68,7 +70,7 @@ export function ProfileForm({
         </div>
         <div className="mt-8 flex items-center gap-4 border-b border-border/60 pb-7">
           <Avatar className="h-20 w-20 ring-4 ring-primary/10">
-            <AvatarImage src={user.image ?? undefined} />
+            <AvatarImage src={image || undefined} />
             <AvatarFallback className="text-xl">{getInitials(user.name)}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
@@ -87,7 +89,7 @@ export function ProfileForm({
             </button>
           ))}
           <button type="button" className="flex w-full items-center gap-4 py-4 text-left text-sm text-muted-foreground transition hover:text-destructive"><Trash2 className="h-4 w-4" /><span className="flex-1">Clear cache</span><ChevronRight className="h-4 w-4" /></button>
-          <button type="button" className="flex w-full items-center gap-4 py-4 text-left text-sm text-destructive"><LogOut className="h-4 w-4" /><span className="flex-1">Log out</span><ChevronRight className="h-4 w-4" /></button>
+          <button type="button" onClick={() => void signOut({ callbackUrl: `${window.location.origin}/` })} className="flex w-full items-center gap-4 py-4 text-left text-sm text-destructive"><LogOut className="h-4 w-4" /><span className="flex-1">Log out</span><ChevronRight className="h-4 w-4" /></button>
         </div>
         <p className="pt-6 text-center text-xs text-muted-foreground/60">EcoRewards profile</p>
       </div>
@@ -102,7 +104,19 @@ export function ProfileForm({
         <Button variant="ghost" size="icon" aria-label="Save profile" type="submit" form="profile-edit-form" disabled={loading}><Check className="h-5 w-5 text-emerald-600" /></Button>
       </div>
       <div className="mt-8 flex justify-center">
-        <Avatar className="h-24 w-24 ring-4 ring-primary/10"><AvatarImage src={user.image ?? undefined} /><AvatarFallback className="text-2xl">{getInitials(form.name)}</AvatarFallback></Avatar>
+        <label htmlFor="profile-image" className="relative block cursor-pointer">
+          <Avatar className="h-24 w-24 ring-4 ring-primary/10"><AvatarImage src={image || undefined} /><AvatarFallback className="text-2xl">{getInitials(form.name)}</AvatarFallback></Avatar>
+          <span className="absolute bottom-0 right-0 rounded-full bg-primary px-2 py-1 text-[10px] font-semibold text-primary-foreground">Change</span>
+        </label>
+        <input id="profile-image" type="file" accept="image/*" className="sr-only" onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          if (!file.type.startsWith("image/")) return toast.error("Choose an image file.");
+          if (file.size > 6 * 1024 * 1024) return toast.error("Profile image must be smaller than 6 MB.");
+          const reader = new FileReader();
+          reader.onload = () => setImage(String(reader.result));
+          reader.readAsDataURL(file);
+        }} />
       </div>
       <form id="profile-edit-form" onSubmit={handleSubmit} className="mt-8 space-y-5">
         <div className="space-y-3"><h2 className="text-sm font-semibold">Your Information</h2>
