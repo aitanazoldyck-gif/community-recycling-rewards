@@ -16,5 +16,7 @@ export function getAppUrl(request?: Request) {
     if (host) return `${protocol}://${host}`;
   }
 
-  return "http://localhost:3000";
+  return process.env.NODE_ENV === "production"
+    ? "https://community-recycling-rewards-environment.up.railway.app"
+    : "http://localhost:3000";
 }
