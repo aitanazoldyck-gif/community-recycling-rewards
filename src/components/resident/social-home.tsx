@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus, MessageCircle, MoreHorizontal, Send, ShoppingBag, Sparkles, Users, Video, UserRound, Home, Heart, Loader2 } from "lucide-react";
+import { ImagePlus, MessageCircle, MoreHorizontal, Send, Sparkles, Heart, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,15 +18,6 @@ type Story = { id: string; body: string | null; mediaUrl: string | null; author:
 type Friend = Author;
 type Listing = { id: string; title: string; price: number; seller?: Author };
 type Conversation = { id: string; members?: { user: Author }[]; messages?: { body: string }[] };
-
-const navItems = [
-  { href: "/resident/home", label: "Home", icon: Home },
-  { href: "/resident/home?view=videos", label: "Videos", icon: Video },
-  { href: "/resident/home?view=friends", label: "Friends", icon: Users },
-  { href: "/resident/profile", label: "Profile", icon: UserRound },
-  { href: "/resident/home?view=shop", label: "Shop", icon: ShoppingBag },
-  { href: "/resident/home?view=messages", label: "Messenger", icon: MessageCircle },
-];
 
 function mediaList(value: unknown): string[] { return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : []; }
 
@@ -85,14 +76,6 @@ export function SocialHome({ initialView = "home" }: { initialView?: string }) {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <header className="sticky top-2 z-20 flex items-center gap-2 overflow-x-auto rounded-2xl border border-border/70 bg-background/90 p-2 shadow-lg shadow-primary/5 backdrop-blur-xl">
-        <Link href="/resident/home" className="mr-2 flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 font-bold text-primary"><span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground"><Sparkles className="h-4 w-4" /></span><span className="hidden sm:inline">Community</span></Link>
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const active = (label.toLowerCase() === view) || (label === "Home" && view === "home");
-          return <Link key={label} href={href} onClick={() => setView(label.toLowerCase())} aria-label={label} className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ${active ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}><Icon className="h-4 w-4" /><span className="hidden md:inline">{label}</span></Link>;
-        })}
-      </header>
-
       {view === "home" || view === "videos" ? <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <main className="space-y-5">
           <div><p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">{view === "videos" ? "Watch together" : "Your community"}</p><h1 className="mt-1 text-3xl font-bold">{view === "videos" ? "Video feed" : "Good morning, resident"}</h1><p className="mt-1 text-muted-foreground">{view === "videos" ? "Short videos shared by people in your community." : "A closer, kinder feed for the people around you."}</p></div>
