@@ -35,6 +35,8 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { useState, useTransition } from "react";
+import { useEffect } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -115,11 +117,53 @@ export function DashboardShell({
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session } = useSession();
+  const [avatarImage, setAvatarImage] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [isNavigating, startNavigation] = useTransition();
   const nav = NAV_BY_ROLE[role] ?? RESIDENT_NAV;
+
+  useEffect(() => {
+    setAvatarImage(session?.user?.image ?? null);
+  }, [session?.user?.image]);
+
+  function uploadAdminAvatar(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choose an image file.");
+      return;
+    }
+    if (file.size > 6 * 1024 * 1024) {
+      toast.error("Profile image must be smaller than 6 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const image = String(reader.result);
+      setUploadingAvatar(true);
+      try {
+        const response = await fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image }),
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(result?.error ?? "Unable to update profile picture");
+        setAvatarImage(image);
+        toast.success("Profile picture updated");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Unable to update profile picture");
+      } finally {
+        setUploadingAvatar(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -203,10 +247,25 @@ export function DashboardShell({
 
         <div className="p-3 border-t border-border/50">
           <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={session?.user?.image ?? undefined} />
-              <AvatarFallback>{getInitials(session?.user?.name)}</AvatarFallback>
-            </Avatar>
+            {role === "ADMIN" ? (
+              <label
+                htmlFor="admin-avatar-upload"
+                title="Upload admin profile picture"
+                className={cn("relative block cursor-pointer rounded-full", uploadingAvatar && "pointer-events-none opacity-60")}
+              >
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={avatarImage ?? undefined} />
+                  <AvatarFallback>{getInitials(session?.user?.name)}</AvatarFallback>
+                </Avatar>
+                <span className="absolute -bottom-1 -right-1 rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">+</span>
+                <input id="admin-avatar-upload" type="file" accept="image/*" className="sr-only" onChange={uploadAdminAvatar} />
+              </label>
+            ) : (
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={session?.user?.image ?? undefined} />
+                <AvatarFallback>{getInitials(session?.user?.name)}</AvatarFallback>
+              </Avatar>
+            )}
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{session?.user?.name}</p>
