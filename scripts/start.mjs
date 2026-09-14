@@ -13,6 +13,7 @@ if (setup.status !== 0) {
 const nextCommand = process.platform === "win32" ? "next.cmd" : "next";
 const next = spawn(nextCommand, ["start", "-H", "0.0.0.0"], {
   stdio: "inherit",
+  shell: process.platform === "win32",
   env: {
     ...process.env,
     PORT: process.env.PORT || "10000",
