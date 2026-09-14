@@ -224,7 +224,7 @@ export function DashboardShell({
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-2 border-b border-border/50 glass px-3 py-2 lg:px-6">
+        <header className="sticky top-0 z-30 flex min-h-16 flex-nowrap items-center gap-2 border-b border-border/50 glass px-3 py-2 lg:px-6">
           <button
             onClick={() => setMobileOpen(true)}
             className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg hover:bg-muted"
@@ -232,7 +232,7 @@ export function DashboardShell({
             <Menu className="h-5 w-5" />
           </button>
           {role === "RESIDENT" && (
-            <nav aria-label="Community navigation" className="flex min-w-0 flex-1 flex-wrap items-center justify-center gap-1">
+            <nav aria-label="Community navigation" className="ml-auto flex min-w-0 flex-1 flex-nowrap items-center justify-end gap-1 overflow-hidden">
               {RESIDENT_SOCIAL_NAV.map((item) => {
                 const itemUrl = new URL(item.href, "http://local");
                 const active = pathname === itemUrl.pathname && (itemUrl.searchParams.get("view") ?? "home") === (searchParams.get("view") ?? "home");
@@ -248,12 +248,12 @@ export function DashboardShell({
                     aria-label={item.label}
                     aria-busy={isNavigating && pendingHref === item.href}
                     className={cn(
-                      "flex items-center gap-1.5 rounded-xl px-2 py-2 text-xs font-medium transition-colors sm:gap-2 sm:px-3 sm:text-sm",
+                      "flex shrink-0 items-center gap-1 rounded-xl px-1.5 py-2 text-[11px] font-medium transition-colors sm:gap-2 sm:px-3 sm:text-sm",
                       active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     <item.icon className={cn("h-4 w-4", isNavigating && pendingHref === item.href && "animate-pulse")} />
-                    <span>{item.label}</span>
+                    <span className="hidden sm:inline">{item.label}</span>
                   </Link>
                 );
               })}
