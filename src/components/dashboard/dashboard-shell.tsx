@@ -6,6 +6,7 @@ import { signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import {
   Recycle,
+  Home,
   LayoutDashboard,
   Wallet,
   History,
@@ -41,7 +42,7 @@ import type { UserRole } from "@/generated/prisma/enums";
 type NavItem = { href: string; label: string; icon: React.ElementType };
 
 const RESIDENT_NAV: NavItem[] = [
-  { href: "/resident", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/resident/home", label: "Home", icon: Home },
   { href: "/resident/wallet", label: "Reward Wallet", icon: Wallet },
   { href: "/resident/qr-card", label: "QR Card", icon: QrCode },
   { href: "/resident/history", label: "Collection History", icon: History },

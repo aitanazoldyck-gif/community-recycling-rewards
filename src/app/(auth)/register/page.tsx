@@ -95,7 +95,7 @@ export default function RegisterPage() {
           return;
         }
 
-        router.push("/resident");
+        router.push("/resident/home");
         router.refresh();
         return;
       }
@@ -113,7 +113,7 @@ export default function RegisterPage() {
     try {
       setGoogleLoading(true);
       await signIn("google", {
-        callbackUrl: `${window.location.origin}/resident`,
+        callbackUrl: `${window.location.origin}/resident/home`,
       });
     } catch (error) {
       const errorToast = showAuthErrorToast(error);

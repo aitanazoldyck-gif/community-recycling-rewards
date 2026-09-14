@@ -22,7 +22,7 @@ export default function LoginPage() {
   const callbackUrl =
     requestedCallback?.startsWith("/") && !requestedCallback.startsWith("//")
       ? requestedCallback
-      : "/resident";
+      : "/resident/home";
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const {

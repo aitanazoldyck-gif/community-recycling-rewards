@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Check, ChevronRight, Clock3, Globe2, Heart, LockKeyhole, LogOut, MapPin, Pencil, Trash2, UserRound } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
