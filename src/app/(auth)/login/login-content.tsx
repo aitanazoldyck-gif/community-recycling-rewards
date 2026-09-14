@@ -79,7 +79,9 @@ export default function LoginPage() {
   async function handleGoogle() {
     try {
       setGoogleLoading(true);
-      await signIn("google", { callbackUrl });
+      await signIn("google", {
+        callbackUrl: `${window.location.origin}${callbackUrl}`,
+      });
     } catch (error) {
       const errorToast = showAuthErrorToast(error);
       toast.error(errorToast.title, {

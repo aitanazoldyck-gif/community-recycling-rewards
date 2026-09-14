@@ -105,7 +105,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const baseUrl = getAppUrl();
+    const baseUrl = getAppUrl(request);
     const verifyLink = `${baseUrl}/verify-email?token=${token}`;
 
     try {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { formatPoints } from "@/lib/utils";
@@ -86,7 +87,14 @@ export function RedeemCard({ balance }: { balance: number }) {
       <CardHeader>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-3">
-            <img src="/gcash-logo.svg" alt="GCash" className="h-12 w-12 shrink-0 rounded-2xl object-cover shadow-md shadow-[#007dfe]/25" />
+            <Image
+              src="/gcash-logo.svg"
+              alt="GCash"
+              width={48}
+              height={48}
+              priority
+              className="h-12 w-12 shrink-0 rounded-2xl object-cover shadow-md shadow-[#007dfe]/25"
+            />
             <div>
               <CardTitle className="text-xl">GCash Redeem</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">Fast, secure payout to your GCash wallet</p>

@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       data: { token, userId: user.id, expires },
     });
 
-    const baseUrl = getAppUrl();
+    const baseUrl = getAppUrl(request);
     const resetLink = `${baseUrl}/reset-password?token=${token}`;
 
     const emailResult = await sendEmail({
