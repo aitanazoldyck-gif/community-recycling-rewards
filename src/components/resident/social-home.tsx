@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { ImagePlus, MessageCircle, MoreHorizontal, Send, Sparkles, Heart, Loader2, UserRound } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,7 +23,8 @@ type Conversation = { id: string; members?: { user: Author }[]; messages?: { bod
 function mediaList(value: unknown): string[] { return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : []; }
 
 export function SocialHome({ initialView = "home" }: { initialView?: string }) {
-  const [view, setView] = useState(initialView);
+  const searchParams = useSearchParams();
+  const [view, setView] = useState(searchParams.get("view") ?? initialView);
   const [posts, setPosts] = useState<Post[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [composer, setComposer] = useState("");
@@ -30,6 +32,10 @@ export function SocialHome({ initialView = "home" }: { initialView?: string }) {
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setView(searchParams.get("view") ?? "home");
+  }, [searchParams]);
 
   async function loadFeed() {
     setLoading(true);

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import {
@@ -34,7 +34,7 @@ import {
   X,
   ChevronLeft,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 import { APP_NAME } from "@/lib/constants";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -107,9 +107,12 @@ export function DashboardShell({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [isNavigating, startNavigation] = useTransition();
   const nav = NAV_BY_ROLE[role] ?? RESIDENT_NAV;
 
   return (
@@ -237,13 +240,19 @@ export function DashboardShell({
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      setPendingHref(item.href);
+                      startNavigation(() => router.push(item.href));
+                    }}
                     aria-label={item.label}
+                    aria-busy={isNavigating && pendingHref === item.href}
                     className={cn(
                       "flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition-colors sm:text-sm",
                       active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className={cn("h-4 w-4", isNavigating && pendingHref === item.href && "animate-pulse")} />
                     <span>{item.label}</span>
                   </Link>
                 );
