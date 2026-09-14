@@ -3,6 +3,7 @@ import { requireRole, requireSession } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { uploadImage } from "@/lib/cloudinary";
+import { GCASH_MINIMUM_POINTS } from "@/lib/utils";
 
 async function ensureWallet(userId: string) {
   const existing = await db.rewardWallet.findUnique({ where: { residentId: userId } });
@@ -48,6 +49,12 @@ export async function POST(request: Request) {
     const isGcashRedemption = Boolean(gcashNumber || gcashQr);
 
     if (isGcashRedemption) {
+      if (!points || points < GCASH_MINIMUM_POINTS) {
+        return NextResponse.json(
+          { error: "The minimum GCash redemption is ₱100." },
+          { status: 400 },
+        );
+      }
       const normalizedNumber = gcashNumber?.replace(/\s|-/g, "");
       if (!normalizedNumber || !/^09\d{9}$/.test(normalizedNumber)) {
         return NextResponse.json({ error: "Enter a valid 11-digit GCash number starting with 09." }, { status: 400 });

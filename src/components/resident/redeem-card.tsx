@@ -4,26 +4,25 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { formatPoints } from "@/lib/utils";
+import { formatCurrency, formatPoints, GCASH_MINIMUM_PESOS, GCASH_MINIMUM_POINTS, pointsToCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, ImagePlus, Smartphone, WalletCards } from "lucide-react";
 
-const REDEEM_THRESHOLD = 150;
-
 export function RedeemCard({ balance }: { balance: number }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [currentBalance, setCurrentBalance] = useState(balance);
-  const [redeemAmount, setRedeemAmount] = useState(String(Math.min(REDEEM_THRESHOLD, balance)));
+  const [redeemAmount, setRedeemAmount] = useState(String(Math.min(GCASH_MINIMUM_PESOS, pointsToCurrency(balance))));
   const [gcashNumber, setGcashNumber] = useState("");
   const [gcashQr, setGcashQr] = useState("");
   const [gcashQrName, setGcashQrName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const amount = Number(redeemAmount);
-  const canRedeem = Number.isInteger(amount) && amount >= REDEEM_THRESHOLD && amount <= currentBalance;
+  const amountPesos = Number(redeemAmount);
+  const redemptionPoints = Math.round(amountPesos / 0.01);
+  const canRedeem = Number.isFinite(amountPesos) && amountPesos >= GCASH_MINIMUM_PESOS && redemptionPoints <= currentBalance;
   const normalizedGcash = gcashNumber.replace(/\s|-/g, "");
   const canRedeemGcash = canRedeem && /^09\d{9}$/.test(normalizedGcash) && Boolean(gcashQr);
 
@@ -54,7 +53,7 @@ export function RedeemCard({ balance }: { balance: number }) {
       const redeemRes = await fetch("/api/rewards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ points: amount, gcashNumber: normalizedGcash, gcashQr }),
+        body: JSON.stringify({ points: redemptionPoints, gcashNumber: normalizedGcash, gcashQr }),
       });
 
       const data = await redeemRes.json();
@@ -65,7 +64,7 @@ export function RedeemCard({ balance }: { balance: number }) {
         throw new Error(message);
       }
 
-      setCurrentBalance((prev) => prev - amount);
+      setCurrentBalance((prev) => prev - redemptionPoints);
       setRedeemAmount("");
       setGcashNumber("");
       setGcashQr("");
@@ -79,8 +78,8 @@ export function RedeemCard({ balance }: { balance: number }) {
     }
   }
 
-  const pointsNeeded = REDEEM_THRESHOLD - currentBalance;
-  const isEligible = currentBalance >= REDEEM_THRESHOLD;
+  const pointsNeeded = GCASH_MINIMUM_POINTS - currentBalance;
+  const isEligible = currentBalance >= GCASH_MINIMUM_POINTS;
 
   return (
     <Card className="overflow-hidden border-2 border-[#007dfe]/20 bg-gradient-to-br from-[#007dfe]/[0.08] via-background to-[#00b8f2]/[0.08] shadow-lg shadow-[#007dfe]/5">
@@ -113,22 +112,23 @@ export function RedeemCard({ balance }: { balance: number }) {
           </div>
           <div className="rounded-xl bg-background/70 p-3 text-right ring-1 ring-border/60">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Minimum</p>
-            <p className="mt-1 text-lg font-bold">{formatPoints(REDEEM_THRESHOLD)} pts</p>
+            <p className="mt-1 text-lg font-bold">{formatCurrency(GCASH_MINIMUM_PESOS)}</p>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <label htmlFor="redeem-amount" className="flex items-center gap-2 text-sm font-semibold"><WalletCards className="h-4 w-4 text-[#007dfe]" /> Points to redeem</label>
+            <label htmlFor="redeem-amount" className="flex items-center gap-2 text-sm font-semibold"><WalletCards className="h-4 w-4 text-[#007dfe]" /> PHP amount to redeem</label>
           <input
             id="redeem-amount"
             type="number"
-            min={REDEEM_THRESHOLD}
-            max={currentBalance}
-            step="1"
+            min={GCASH_MINIMUM_PESOS}
+            max={pointsToCurrency(currentBalance)}
+            step="0.01"
             value={redeemAmount}
             onChange={(event) => setRedeemAmount(event.target.value)}
             className="flex h-11 w-full rounded-xl border border-border/80 bg-white/80 px-4 text-sm dark:bg-white/5"
           />
+          <p className="text-xs text-muted-foreground">Minimum: {formatCurrency(GCASH_MINIMUM_PESOS)}. 1 point is worth ₱0.01.</p>
           </div>
           <div className="space-y-2">
             <label htmlFor="gcash-number" className="flex items-center gap-2 text-sm font-semibold"><Smartphone className="h-4 w-4 text-[#007dfe]" /> GCash mobile number</label>

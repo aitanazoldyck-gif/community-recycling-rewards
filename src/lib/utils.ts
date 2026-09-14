@@ -3,6 +3,8 @@ import { twMerge } from "tailwind-merge";
 
 export const POINTS_PER_CENTAVO = 1;
 export const PHP_PER_POINT = 0.01;
+export const GCASH_MINIMUM_PESOS = 100;
+export const GCASH_MINIMUM_POINTS = GCASH_MINIMUM_PESOS / PHP_PER_POINT;
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
