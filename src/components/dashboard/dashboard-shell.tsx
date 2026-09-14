@@ -232,7 +232,7 @@ export function DashboardShell({
             <Menu className="h-5 w-5" />
           </button>
           {role === "RESIDENT" && (
-            <nav aria-label="Community navigation" className="ml-auto flex min-w-0 flex-1 flex-nowrap items-center justify-end gap-1 overflow-hidden">
+            <nav aria-label="Community navigation" className="absolute left-1/2 flex -translate-x-1/2 flex-nowrap items-center gap-1.5 overflow-hidden">
               {RESIDENT_SOCIAL_NAV.map((item) => {
                 const itemUrl = new URL(item.href, "http://local");
                 const active = pathname === itemUrl.pathname && (itemUrl.searchParams.get("view") ?? "home") === (searchParams.get("view") ?? "home");
@@ -248,12 +248,12 @@ export function DashboardShell({
                     aria-label={item.label}
                     aria-busy={isNavigating && pendingHref === item.href}
                     className={cn(
-                      "flex shrink-0 items-center gap-1 rounded-xl px-1.5 py-2 text-[11px] font-medium transition-colors sm:gap-2 sm:px-3 sm:text-sm",
+                      "flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors sm:gap-2 sm:px-3.5 sm:text-sm",
                       active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     <item.icon className={cn("h-4 w-4", isNavigating && pendingHref === item.href && "animate-pulse")} />
-                    <span className="hidden sm:inline">{item.label}</span>
+                    <span className="hidden md:inline">{item.label}</span>
                   </Link>
                 );
               })}
