@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus, MessageCircle, MoreHorizontal, Send, Sparkles, Heart, Loader2 } from "lucide-react";
+import { ImagePlus, MessageCircle, MoreHorizontal, Send, Sparkles, Heart, Loader2, UserRound } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
