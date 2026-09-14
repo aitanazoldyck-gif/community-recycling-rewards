@@ -10,7 +10,7 @@ const schema = z.object({
   address: z.string().optional(),
   houseNumber: z.string().optional(),
   barangayId: z.string().optional(),
-  image: z.string().max(12_000_000).optional(),
+  image: z.string().max(4_000_000).optional(),
 });
 
 export async function PATCH(request: Request) {
@@ -23,7 +23,7 @@ export async function PATCH(request: Request) {
 
     let imageUrl: string | undefined;
     if (data.image) {
-      if (!data.image.startsWith("data:image/")) {
+      if (!/^data:image\/(jpeg|png|webp);base64,/i.test(data.image)) {
         return NextResponse.json({ error: "Profile image must be an image upload." }, { status: 400 });
       }
       imageUrl = (await uploadImage(data.image, "profiles")).url;
@@ -40,20 +40,27 @@ export async function PATCH(request: Request) {
       });
     }
 
-    await db.residentProfile.upsert({
-      where: { userId },
-      update: {
-        address: data.address,
-        houseNumber: data.houseNumber,
-        barangayId: data.barangayId || null,
-      },
-      create: {
-        userId,
-        address: data.address,
-        houseNumber: data.houseNumber,
-        barangayId: data.barangayId || null,
-      },
-    });
+    const isResidentProfileUpdate =
+      authResult.session.user.role === "RESIDENT" ||
+      data.address !== undefined ||
+      data.houseNumber !== undefined ||
+      data.barangayId !== undefined;
+    if (isResidentProfileUpdate) {
+      await db.residentProfile.upsert({
+        where: { userId },
+        update: {
+          address: data.address,
+          houseNumber: data.houseNumber,
+          barangayId: data.barangayId || null,
+        },
+        create: {
+          userId,
+          address: data.address,
+          houseNumber: data.houseNumber,
+          barangayId: data.barangayId || null,
+        },
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -62,7 +69,7 @@ export async function PATCH(request: Request) {
     }
     console.error("[profile] Update failed", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to update profile" },
+      { error: "Unable to update profile. Please try again." },
       { status: 500 },
     );
   }

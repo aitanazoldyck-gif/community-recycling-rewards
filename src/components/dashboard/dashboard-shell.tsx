@@ -42,6 +42,7 @@ import { APP_NAME } from "@/lib/constants";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { getInitials } from "@/lib/utils";
+import { prepareProfileImage } from "@/lib/profile-image";
 import type { UserRole } from "@/generated/prisma/enums";
 
 type NavItem = { href: string; label: string; icon: React.ElementType };
@@ -142,9 +143,7 @@ export function DashboardShell({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const image = String(reader.result);
+    void prepareProfileImage(file).then(async (image) => {
       setUploadingAvatar(true);
       try {
         const response = await fetch("/api/profile", {
@@ -161,8 +160,9 @@ export function DashboardShell({
       } finally {
         setUploadingAvatar(false);
       }
-    };
-    reader.readAsDataURL(file);
+    }).catch((error: unknown) => {
+      toast.error(error instanceof Error ? error.message : "Unable to process image file.");
+    });
   }
 
   return (

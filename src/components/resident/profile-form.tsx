@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
+import { prepareProfileImage } from "@/lib/profile-image";
 
 type Barangay = { id: string; name: string };
 
@@ -117,9 +118,9 @@ export function ProfileForm({
           if (!file) return;
           if (!file.type.startsWith("image/")) return toast.error("Choose an image file.");
           if (file.size > 6 * 1024 * 1024) return toast.error("Profile image must be smaller than 6 MB.");
-          const reader = new FileReader();
-          reader.onload = () => setImage(String(reader.result));
-          reader.readAsDataURL(file);
+          void prepareProfileImage(file)
+            .then(setImage)
+            .catch((error: unknown) => toast.error(error instanceof Error ? error.message : "Unable to process image file."));
         }} />
       </div>
       <form id="profile-edit-form" onSubmit={handleSubmit} className="mt-8 space-y-5">
