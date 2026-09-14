@@ -24,7 +24,12 @@ export default async function WalletPage() {
       },
     }),
     db.reward.findMany({
-      where: { isActive: true, deletedAt: null, stock: { gt: 0 } },
+      where: {
+        isActive: true,
+        deletedAt: null,
+        stock: { gt: 0 },
+        name: { notIn: ["GCash Redeem", "₱50 Mobile Load"] },
+      },
       orderBy: { pointsCost: "asc" },
     }),
     db.redemptionRequest.findMany({

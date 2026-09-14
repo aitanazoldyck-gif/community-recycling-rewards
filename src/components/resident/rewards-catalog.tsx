@@ -99,7 +99,6 @@ export function RewardsCatalog({
                     Value: {formatCurrency(reward.cashValue)}
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground">{reward.stock} in stock</p>
                 <Button
                   className="w-full"
                   variant={canRedeem ? "default" : "secondary"}
