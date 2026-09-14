@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import {
   Recycle,
   Home,
+  Video,
+  ShoppingBag,
+  MessageCircle,
   LayoutDashboard,
   Wallet,
   History,
@@ -42,7 +45,6 @@ import type { UserRole } from "@/generated/prisma/enums";
 type NavItem = { href: string; label: string; icon: React.ElementType };
 
 const RESIDENT_NAV: NavItem[] = [
-  { href: "/resident/home", label: "Home", icon: Home },
   { href: "/resident/wallet", label: "Reward Wallet", icon: Wallet },
   { href: "/resident/qr-card", label: "QR Card", icon: QrCode },
   { href: "/resident/history", label: "Collection History", icon: History },
@@ -54,7 +56,15 @@ const RESIDENT_NAV: NavItem[] = [
   { href: "/resident/impact", label: "Environmental Impact", icon: Leaf },
   { href: "/resident/assistant", label: "AI Assistant", icon: Bot },
   { href: "/resident/notifications", label: "Notifications", icon: Bell },
+];
+
+const RESIDENT_SOCIAL_NAV: NavItem[] = [
+  { href: "/resident/home", label: "Home", icon: Home },
+  { href: "/resident/home?view=videos", label: "Videos", icon: Video },
+  { href: "/resident/home?view=friends", label: "Friends", icon: Users },
   { href: "/resident/profile", label: "Profile", icon: User },
+  { href: "/resident/home?view=shop", label: "Shop", icon: ShoppingBag },
+  { href: "/resident/home?view=messages", label: "Messenger", icon: MessageCircle },
 ];
 
 const STAFF_NAV: NavItem[] = [
@@ -96,6 +106,7 @@ export function DashboardShell({
   role: UserRole;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -210,13 +221,35 @@ export function DashboardShell({
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/50 glass px-4 lg:px-6">
+        <header className="sticky top-0 z-30 flex min-h-16 items-center gap-3 border-b border-border/50 glass px-3 py-2 lg:px-6">
           <button
             onClick={() => setMobileOpen(true)}
             className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg hover:bg-muted"
           >
             <Menu className="h-5 w-5" />
           </button>
+          {role === "RESIDENT" && (
+            <nav aria-label="Community navigation" className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {RESIDENT_SOCIAL_NAV.map((item) => {
+                const itemUrl = new URL(item.href, "http://local");
+                const active = pathname === itemUrl.pathname && (itemUrl.searchParams.get("view") ?? "home") === (searchParams.get("view") ?? "home");
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-label={item.label}
+                    className={cn(
+                      "flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition-colors sm:text-sm",
+                      active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
           <div className="flex-1" />
         </header>
         <motion.main
