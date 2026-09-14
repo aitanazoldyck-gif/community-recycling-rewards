@@ -58,7 +58,7 @@ export default async function WalletPage() {
             <p className="text-5xl font-bold text-gradient mt-2">{formatPoints(balance)}</p>
             <p className="text-sm text-muted-foreground mt-1">points</p>
             <p className="mt-3 text-sm font-medium text-primary">
-              Equivalent value (1 pt = ₱0.01): {formatCurrency(pointsToCurrency(balance))}
+              {formatCurrency(pointsToCurrency(balance))}
             </p>
           </CardContent>
         </Card>
