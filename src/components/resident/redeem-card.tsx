@@ -88,7 +88,7 @@ export function RedeemCard({ balance }: { balance: number }) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-3">
             <Image
-              src="/GCash_Logo.svg"
+              src="/gcash.svg"
               alt="GCash"
               width={48}
               height={48}
