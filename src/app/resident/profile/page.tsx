@@ -31,6 +31,7 @@ export default async function ProfilePage() {
         address: profile?.address ?? "",
         houseNumber: profile?.houseNumber ?? "",
         barangayId: profile?.barangayId ?? "",
+        barangayName: profile?.barangay?.name ?? "Not set",
       }}
       barangays={barangays}
     />
