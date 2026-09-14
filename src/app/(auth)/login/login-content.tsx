@@ -80,7 +80,7 @@ export default function LoginPage() {
     try {
       setGoogleLoading(true);
       await signIn("google", {
-        callbackUrl: `${window.location.origin}${callbackUrl}`,
+        callbackUrl,
       });
     } catch (error) {
       const errorToast = showAuthErrorToast(error);

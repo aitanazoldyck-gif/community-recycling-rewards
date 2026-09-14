@@ -14,6 +14,16 @@ export const authConfig = {
   },
   providers: [],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      try {
+        const target = new URL(url);
+        if (target.origin === baseUrl) return url;
+      } catch {
+        return baseUrl;
+      }
+      return baseUrl;
+    },
     jwt({ token, user }) {
       if (user) {
         token.id = user.id!;
