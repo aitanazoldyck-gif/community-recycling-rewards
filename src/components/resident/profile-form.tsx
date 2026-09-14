@@ -39,7 +39,10 @@ export function ProfileForm({
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, image: image || undefined }),
+        body: JSON.stringify({
+          ...form,
+          image: image.startsWith("data:image/") ? image : undefined,
+        }),
       });
       const result = await res.json().catch(() => null);
       if (!res.ok) throw new Error(result?.error ?? "Update failed");
