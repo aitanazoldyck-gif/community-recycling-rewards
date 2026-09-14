@@ -112,7 +112,9 @@ export default function RegisterPage() {
   async function handleGoogle() {
     try {
       setGoogleLoading(true);
-      await signIn("google", { callbackUrl: "/resident" });
+      await signIn("google", {
+        callbackUrl: `${window.location.origin}/resident`,
+      });
     } catch (error) {
       const errorToast = showAuthErrorToast(error);
       toast.error(errorToast.title, {

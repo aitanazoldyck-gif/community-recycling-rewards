@@ -18,7 +18,11 @@ import { showAuthErrorToast } from "@/lib/auth-error-handler";
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/resident";
+  const requestedCallback = searchParams.get("callbackUrl");
+  const callbackUrl =
+    requestedCallback?.startsWith("/") && !requestedCallback.startsWith("//")
+      ? requestedCallback
+      : "/resident";
   const [googleLoading, setGoogleLoading] = useState(false);
 
   const {
