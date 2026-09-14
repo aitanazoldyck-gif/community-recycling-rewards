@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { formatPoints } from "@/lib/utils";
+import { formatCurrency, formatPoints, pointsToCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RewardsCatalog } from "@/components/resident/rewards-catalog";
@@ -57,6 +57,9 @@ export default async function WalletPage() {
             <p className="text-sm text-muted-foreground">Available balance</p>
             <p className="text-5xl font-bold text-gradient mt-2">{formatPoints(balance)}</p>
             <p className="text-sm text-muted-foreground mt-1">points</p>
+            <p className="mt-3 text-sm font-medium text-primary">
+              Equivalent value (1 pt = ₱0.01): {formatCurrency(pointsToCurrency(balance))}
+            </p>
           </CardContent>
         </Card>
         <Card>
