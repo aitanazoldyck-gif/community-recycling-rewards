@@ -10,12 +10,34 @@ export async function GET() {
   const result = await requireRole(["RESIDENT"]);
   if ("error" in result) return result.error;
   const userId = result.session.user.id;
-  const [asA, asB, requests] = await Promise.all([
+  const [asA, asB, requests, sentRequests, residents] = await Promise.all([
     db.socialFriendship.findMany({ where: { userAId: userId, status: "ACCEPTED" }, include: { userB: { select: { id: true, name: true, image: true } } } }),
     db.socialFriendship.findMany({ where: { userBId: userId, status: "ACCEPTED" }, include: { userA: { select: { id: true, name: true, image: true } } } }),
     db.socialFriendRequest.findMany({ where: { receiverId: userId, status: "PENDING" }, orderBy: { createdAt: "desc" }, include: { sender: { select: { id: true, name: true, image: true } } } }),
+    db.socialFriendRequest.findMany({ where: { senderId: userId, status: "PENDING" }, select: { receiverId: true } }),
+    db.user.findMany({ where: { id: { not: userId }, role: "RESIDENT", isActive: true, deletedAt: null }, select: { id: true, name: true, image: true }, orderBy: { name: "asc" } }),
   ]);
-  return NextResponse.json({ friends: [...asA.map((x) => x.userB), ...asB.map((x) => x.userA)], requests });
+  const friends = [...asA.map((x) => x.userB), ...asB.map((x) => x.userA)];
+  const friendIds = new Set(friends.map((friend) => friend.id));
+  const friendSets = await Promise.all(friends.map(async (friend) => {
+    const [friendA, friendB] = await Promise.all([
+      db.socialFriendship.findMany({ where: { userAId: friend.id, status: "ACCEPTED" }, select: { userBId: true } }),
+      db.socialFriendship.findMany({ where: { userBId: friend.id, status: "ACCEPTED" }, select: { userAId: true } }),
+    ]);
+    return new Set([...friendA.map((item) => item.userBId), ...friendB.map((item) => item.userAId)]);
+  }));
+  const mutualFor = (index: number) => [...friendSets[index]].filter((id) => friendIds.has(id)).length;
+  const friendCards = friends.map((friend, index) => ({ ...friend, status: "FRIEND", mutualCount: mutualFor(index) }));
+  const incoming = requests.map((request) => ({ ...request.sender, status: "INCOMING", requestId: request.id }));
+  const sentIds = new Set(sentRequests.map((request) => request.receiverId));
+  const suggestions = residents.filter((resident) => !friendIds.has(resident.id) && !sentIds.has(resident.id) && !incoming.some((request) => request.id === resident.id));
+  const allFriendships = await db.socialFriendship.findMany({ where: { status: "ACCEPTED" }, select: { userAId: true, userBId: true } });
+  const mutualCountFor = (candidateId: string) => allFriendships.filter((friendship) => {
+    const connectsCandidate = friendship.userAId === candidateId || friendship.userBId === candidateId;
+    const otherId = friendship.userAId === candidateId ? friendship.userBId : friendship.userAId;
+    return connectsCandidate && friendIds.has(otherId);
+  }).length;
+  return NextResponse.json({ friends: friendCards, requests: incoming, suggestions: suggestions.map((suggestion) => ({ ...suggestion, status: "SUGGESTION", mutualCount: mutualCountFor(suggestion.id) })) });
 }
 
 export async function POST(request: Request) {
