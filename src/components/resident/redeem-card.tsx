@@ -90,10 +90,10 @@ export function RedeemCard({ balance }: { balance: number }) {
             <Image
               src="/gcash.svg"
               alt="GCash"
-              width={48}
-              height={48}
+              width={184}
+              height={104}
               priority
-              className="h-12 w-12 shrink-0 rounded-2xl object-cover shadow-md shadow-[#007dfe]/25"
+              className="h-[4.5rem] w-40 shrink-0 rounded-2xl object-contain shadow-md shadow-[#007dfe]/25"
             />
             <div>
               <CardTitle className="text-xl">GCash Redeem</CardTitle>
