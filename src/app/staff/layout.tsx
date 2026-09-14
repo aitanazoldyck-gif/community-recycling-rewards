@@ -2,6 +2,8 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 
+export const dynamic = "force-dynamic";
+
 export default async function StaffLayout({
   children,
 }: {
