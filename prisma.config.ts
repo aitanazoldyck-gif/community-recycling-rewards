@@ -3,12 +3,16 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+const railwayDatabaseUrl = process.env.MYSQLHOST && process.env.MYSQLUSER && process.env.MYSQLPASSWORD
+  ? `mysql://${encodeURIComponent(process.env.MYSQLUSER)}:${encodeURIComponent(process.env.MYSQLPASSWORD)}@${process.env.MYSQLHOST}:${process.env.MYSQLPORT ?? "3306"}/${encodeURIComponent(process.env.MYSQLDATABASE ?? process.env.MYSQL_DATABASE ?? "railway")}`
+  : undefined;
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env.DATABASE_URL ?? "mysql://root:password@localhost:3306/ecorewards",
+    url: process.env.DATABASE_URL ?? process.env.DIRECT_URL ?? railwayDatabaseUrl ?? "mysql://root:password@localhost:3306/ecorewards",
   },
 });

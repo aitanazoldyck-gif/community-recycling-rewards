@@ -1,7 +1,10 @@
 import { execSync } from "node:child_process";
 import "dotenv/config";
 
-const databaseUrl = process.env.DATABASE_URL ?? process.env.DIRECT_URL;
+const railwayDatabaseUrl = process.env.MYSQLHOST && process.env.MYSQLUSER && process.env.MYSQLPASSWORD
+  ? `mysql://${encodeURIComponent(process.env.MYSQLUSER)}:${encodeURIComponent(process.env.MYSQLPASSWORD)}@${process.env.MYSQLHOST}:${process.env.MYSQLPORT ?? "3306"}/${encodeURIComponent(process.env.MYSQLDATABASE ?? process.env.MYSQL_DATABASE ?? "railway")}`
+  : undefined;
+const databaseUrl = process.env.DATABASE_URL ?? process.env.DIRECT_URL ?? railwayDatabaseUrl;
 
 if (!databaseUrl) {
   console.warn("[setup-db] DATABASE_URL is not set — skipping database setup.");
