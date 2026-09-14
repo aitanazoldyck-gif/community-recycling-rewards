@@ -10,7 +10,7 @@ const schema = z.object({
   address: z.string().optional(),
   houseNumber: z.string().optional(),
   barangayId: z.string().optional(),
-  image: z.string().max(4_000_000).optional(),
+  image: z.string().max(3_500_000).optional(),
 });
 
 export async function PATCH(request: Request) {
@@ -26,38 +26,43 @@ export async function PATCH(request: Request) {
       if (!/^data:image\/(jpeg|png|webp);base64,/i.test(data.image)) {
         return NextResponse.json({ error: "Profile image must be an image upload." }, { status: 400 });
       }
-      imageUrl = (await uploadImage(data.image, "profiles")).url;
+      try {
+        imageUrl = (await uploadImage(data.image, "profiles")).url;
+      } catch (error) {
+        console.error("[profile] Image provider failed; using database image fallback", error);
+        imageUrl = data.image;
+      }
     }
 
-    if (data.name || data.phone || imageUrl) {
+    const userData = {
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.phone !== undefined ? { phone: data.phone } : {}),
+      ...(imageUrl ? { image: imageUrl } : {}),
+    };
+    if (Object.keys(userData).length > 0) {
       await db.user.update({
         where: { id: userId },
-        data: {
-          name: data.name,
-          phone: data.phone,
-          ...(imageUrl ? { image: imageUrl } : {}),
-        },
+        data: userData,
       });
     }
 
-    const isResidentProfileUpdate =
-      authResult.session.user.role === "RESIDENT" ||
+    const hasResidentProfileFields =
       data.address !== undefined ||
       data.houseNumber !== undefined ||
       data.barangayId !== undefined;
+    const isResidentProfileUpdate = authResult.session.user.role === "RESIDENT" && hasResidentProfileFields;
     if (isResidentProfileUpdate) {
+      const profileData = {
+        ...(data.address !== undefined ? { address: data.address } : {}),
+        ...(data.houseNumber !== undefined ? { houseNumber: data.houseNumber } : {}),
+        ...(data.barangayId !== undefined ? { barangayId: data.barangayId || null } : {}),
+      };
       await db.residentProfile.upsert({
         where: { userId },
-        update: {
-          address: data.address,
-          houseNumber: data.houseNumber,
-          barangayId: data.barangayId || null,
-        },
+        update: profileData,
         create: {
           userId,
-          address: data.address,
-          houseNumber: data.houseNumber,
-          barangayId: data.barangayId || null,
+          ...profileData,
         },
       });
     }

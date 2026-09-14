@@ -7,9 +7,13 @@ export async function prepareProfileImage(file: File): Promise<string> {
   canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
   canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
   const context = canvas.getContext("2d");
-  if (!context) return source;
+  if (!context) throw new Error("Unable to process image file.");
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/jpeg", 0.82);
+  const result = canvas.toDataURL("image/jpeg", 0.82);
+  if (result.length > 3_500_000) {
+    throw new Error("Please choose a smaller image.");
+  }
+  return result;
 }
 
 function readFile(file: File): Promise<string> {
