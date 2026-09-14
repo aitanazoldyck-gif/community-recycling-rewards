@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireRole } from "@/lib/api-auth";
 import { db } from "@/lib/db";
-import { getFriendIds } from "@/lib/social";
 
 const schema = z.object({
   postId: z.string().min(1),
@@ -12,11 +11,11 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
-  const result = await requireRole(["RESIDENT"]);
+  const result = await requireRole(["RESIDENT", "ADMIN"]);
   if ("error" in result) return result.error;
   try {
     const data = schema.parse(await request.json());
-    const post = await db.socialPost.findFirst({ where: { id: data.postId, deletedAt: null, authorId: { in: await getFriendIds(result.session.user.id) } } });
+    const post = await db.socialPost.findFirst({ where: { id: data.postId, deletedAt: null } });
     if (!post) return NextResponse.json({ error: "Post is not available." }, { status: 404 });
     if (data.reaction) {
       const item = await db.socialPostReaction.upsert({ where: { postId_userId: { postId: data.postId, userId: result.session.user.id } }, update: { type: data.reaction }, create: { postId: data.postId, userId: result.session.user.id, type: data.reaction } });

@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import {
   ImagePlus,
   MessageCircle,
-  MoreHorizontal,
   Send,
   Sparkles,
   Heart,
@@ -29,6 +29,7 @@ type Post = {
   mediaUrls: unknown;
   isVideo: boolean;
   createdAt: string;
+  updatedAt: string;
   author: Author;
   reactions: { userId: string; type: string }[];
   comments: {
@@ -63,6 +64,7 @@ function mediaList(value: unknown): string[] {
 }
 
 export function SocialHome({ initialView = "home" }: { initialView?: string }) {
+  const { data: session } = useSession();
   const searchParams = useSearchParams();
   const [view, setView] = useState(searchParams.get("view") ?? initialView);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -71,6 +73,8 @@ export function SocialHome({ initialView = "home" }: { initialView?: string }) {
   const [media, setMedia] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState<Record<string, string>>({});
+  const [editingPost, setEditingPost] = useState<string | null>(null);
+  const [editBody, setEditBody] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -147,6 +151,33 @@ export function SocialHome({ initialView = "home" }: { initialView?: string }) {
       setComment((current) => ({ ...current, [postId]: "" }));
       await loadFeed();
     }
+  }
+
+  function beginEdit(post: Post) {
+    setEditingPost(post.id);
+    setEditBody(post.body ?? "");
+  }
+
+  async function updatePost(postId: string) {
+    const response = await fetch(`/api/social/feed?postId=${postId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: editBody }),
+    });
+    const data = await response.json();
+    if (!response.ok) return toast.error(data.error ?? "Unable to update post");
+    setEditingPost(null);
+    toast.success("Post updated");
+    await loadFeed();
+  }
+
+  async function deletePost(postId: string) {
+    if (!window.confirm("Delete this post?")) return;
+    const response = await fetch(`/api/social/feed?postId=${postId}`, { method: "DELETE" });
+    const data = await response.json();
+    if (!response.ok) return toast.error(data.error ?? "Unable to delete post");
+    toast.success("Post deleted");
+    await loadFeed();
   }
 
   const filteredPosts =
@@ -288,17 +319,24 @@ export function SocialHome({ initialView = "home" }: { initialView?: string }) {
                           {new Date(post.createdAt).toLocaleString()}
                         </p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Post options"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      {(session?.user?.id === post.author.id || session?.user?.role === "ADMIN") && (
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => beginEdit(post)}>Edit</Button>
+                          <Button variant="ghost" size="sm" onClick={() => void deletePost(post.id)}>Delete</Button>
+                        </div>
+                      )}
                     </div>
-                    {post.body && (
+                    {editingPost === post.id ? (
+                      <div className="space-y-2 px-4 pb-4">
+                        <Textarea value={editBody} onChange={(event) => setEditBody(event.target.value)} />
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => setEditingPost(null)}>Cancel</Button>
+                          <Button size="sm" onClick={() => void updatePost(post.id)}>Save</Button>
+                        </div>
+                      </div>
+                    ) : post.body ? (
                       <p className="px-4 pb-4 leading-7">{post.body}</p>
-                    )}
+                    ) : null}
                     {mediaList(post.mediaUrls).map((url) => (
                       <img
                         key={url}
