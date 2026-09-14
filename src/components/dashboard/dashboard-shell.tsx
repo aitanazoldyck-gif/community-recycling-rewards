@@ -78,6 +78,7 @@ const STAFF_NAV: NavItem[] = [
 
 const ADMIN_NAV: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/home", label: "Community Home", icon: Home },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/barangays", label: "Barangays", icon: Building2 },
   { href: "/admin/centers", label: "Collection Centers", icon: MapPin },
@@ -88,6 +89,11 @@ const ADMIN_NAV: NavItem[] = [
   { href: "/admin/announcements", label: "Announcements", icon: Bell },
   { href: "/admin/reports", label: "Reports", icon: ClipboardList },
   { href: "/admin/settings", label: "Settings", icon: Settings },
+];
+
+const ADMIN_HEADER_NAV: NavItem[] = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/home", label: "Community Home", icon: Home },
 ];
 
 const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
@@ -253,6 +259,27 @@ export function DashboardShell({
                     )}
                   >
                     <item.icon className={cn("h-4 w-4", isNavigating && pendingHref === item.href && "animate-pulse")} />
+                    <span className="hidden md:inline">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
+          {role === "ADMIN" && (
+            <nav aria-label="Admin navigation" className="absolute left-1/2 flex -translate-x-1/2 flex-nowrap items-center gap-1.5 overflow-hidden">
+              {ADMIN_HEADER_NAV.map((item) => {
+                const active = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      "flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2.5 text-xs font-medium transition-colors sm:gap-2 sm:px-3.5 sm:text-sm",
+                      active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
                     <span className="hidden md:inline">{item.label}</span>
                   </Link>
                 );

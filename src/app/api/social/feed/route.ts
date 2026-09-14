@@ -11,13 +11,25 @@ const postSchema = z.object({
 }).refine((data) => Boolean(data.body) || data.mediaUrls.length > 0, "Add a caption or media to publish.");
 
 export async function GET(request: Request) {
-  const result = await requireRole(["RESIDENT"]);
+  const result = await requireRole(["RESIDENT", "ADMIN"]);
   if ("error" in result) return result.error;
   const url = new URL(request.url);
   const cursor = url.searchParams.get("cursor") ?? undefined;
-  const ids = await getFriendIds(result.session.user.id);
+  const ids = result.session.user.role === "ADMIN"
+    ? undefined
+    : await getFriendIds(result.session.user.id);
   const posts = await db.socialPost.findMany({
-    where: { authorId: { in: ids }, deletedAt: null },
+    where: {
+      deletedAt: null,
+      ...(ids
+        ? {
+            OR: [
+              { authorId: { in: ids } },
+              { author: { role: "ADMIN" } },
+            ],
+          }
+        : {}),
+    },
     orderBy: { createdAt: "desc" },
     take: 10,
     ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
@@ -31,7 +43,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const result = await requireRole(["RESIDENT"]);
+  const result = await requireRole(["RESIDENT", "ADMIN"]);
   if ("error" in result) return result.error;
   try {
     const data = postSchema.parse(await request.json());
