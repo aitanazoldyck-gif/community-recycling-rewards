@@ -17,6 +17,6 @@ export function getAppUrl(request?: Request) {
   }
 
   return process.env.NODE_ENV === "production"
-    ? "https://ecorewards.up.railway.app"
+    ? "https://community-recycling-rewards-environment.up.railway.app"
     : "http://localhost:3000";
 }

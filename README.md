@@ -170,7 +170,7 @@ npm run start
 ```
 
 Ensure `DATABASE_URL`, `AUTH_SECRET`, and `NEXTAUTH_URL` are set in your deployment environment.
-For the Railway deployment, use `NEXTAUTH_URL=https://ecorewards.up.railway.app`.
+For the Railway deployment, use `NEXTAUTH_URL=https://community-recycling-rewards-environment.up.railway.app`.
 
 `npm run start` automatically runs `npm run db:setup` first (creates tables + demo users).
 
@@ -181,7 +181,7 @@ For the Railway deployment, use `NEXTAUTH_URL=https://ecorewards.up.railway.app`
 2. Open the app service → **Variables** → **Add Reference** and select the
    MySQL service's `DATABASE_URL`.
 3. Remove any old database URL values from previous hosting providers.
-5. Set `NEXTAUTH_URL=https://ecorewards.up.railway.app`.
+5. Set `NEXTAUTH_URL=https://community-recycling-rewards-environment.up.railway.app`.
 6. Add `AUTH_SECRET` and set `AUTH_TRUST_HOST=true`.
 7. Deploy the app with build command `npm run build` and start command
    `npm run start`.
