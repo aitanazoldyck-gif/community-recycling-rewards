@@ -11,12 +11,18 @@ if (setup.status !== 0) {
 }
 
 const nextCommand = process.platform === "win32" ? "next.cmd" : "next";
-const next = spawn(nextCommand, ["start", "-H", "0.0.0.0"], {
+const port = Number.parseInt(process.env.PORT || "3000", 10);
+const safePort = Number.isFinite(port) && port > 0 ? port : 3000;
+
+console.log(`[start] Starting Next.js on 0.0.0.0:${safePort}`);
+
+const next = spawn(nextCommand, ["start", "-H", "0.0.0.0", "-p", String(safePort)], {
   stdio: "inherit",
   shell: process.platform === "win32",
   env: {
     ...process.env,
-    PORT: process.env.PORT || "10000",
+    PORT: String(safePort),
+    HOSTNAME: "0.0.0.0",
   },
 });
 
