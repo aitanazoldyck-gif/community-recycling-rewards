@@ -21,7 +21,7 @@
     "seed": "npx tsx prisma/seed.ts"
   },
   "engines": {
-    "node": "20.x"
+    "node": ">=22.12.0"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
